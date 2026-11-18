@@ -22,7 +22,8 @@
       width: 100%;
       height: 100%;
       background: radial-gradient(circle at center, #252432 0%, #111115 100%);
-      transition: background 0.6s ease;
+      transition: background 0.6s ease, transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+      transform-origin: center center;
       --poster-color: transparent;
     }
 
@@ -563,10 +564,6 @@
 
     // --- 1. CAMERA FRAMING & GROWTH SCALE ---
     viewerEl.addEventListener("load", () => {
-      // Ukur dimensi & jarak ideal kamera pada ukuran penuh 100%
-      viewerEl.scale = "1 1 1";
-      viewerEl.updateFraming();
-      
       const orbit = viewerEl.getCameraOrbit();
       const target = viewerEl.getCameraTarget();
       const dims = viewerEl.getDimensions();
@@ -574,10 +571,6 @@
       baseRadius = orbit.radius;
       baseTargetY = target.y;
       modelHeight = dims.y || 1;
-
-      viewerEl.setAttribute("camera-orbit", `auto auto ${baseRadius * 1.2}m`);
-      viewerEl.setAttribute("min-camera-orbit", `auto auto ${baseRadius * 0.6}m`);
-      viewerEl.setAttribute("max-camera-orbit", `auto auto ${baseRadius * 2.5}m`);
 
       syncModelState();
     });
@@ -595,10 +588,26 @@
     }
 
     function updateModelGrowthScale() {
+      viewerEl.scale = "1 1 1";
+
       if (!growToggle.checked) {
-        viewerEl.scale = "1 1 1";
+        viewerEl.style.transform = "scale(1)";
         return;
       }
+
+      if (currentPhase === "focus") {
+        const totalFocusSec = focusMinutes * 60;
+        const elapsed = Math.max(0, totalFocusSec - timeLeft);
+        const progress = Math.min(1, elapsed / totalFocusSec);
+
+        // Mulai dari 0.35 (35%) dan tumbuh mulus sampai 1.0 (100%)
+        const minScale = 0.35;
+        const s = (minScale + (1 - minScale) * progress).toFixed(4);
+        viewerEl.style.transform = `scale(${s})`;
+      } else {
+        viewerEl.style.transform = "scale(1)";
+      }
+    }
 
       if (currentPhase === "focus") {
         const totalFocusSec = focusMinutes * 60;
