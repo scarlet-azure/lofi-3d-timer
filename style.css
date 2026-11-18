@@ -1,0 +1,90 @@
+/* Hilangkan panah default input number */
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+  -webkit-appearance: none; 
+  margin: 0; 
+}
+input[type=number] { -moz-appearance: textfield; }
+
+/* Hilangkan garis progress bar bawaan model-viewer */
+model-viewer {
+  --poster-color: transparent;
+  --progress-bar-color: transparent;
+  --progress-bar-height: 0px;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+}
+
+/* Wrapper Skala Utama */
+#mainScaleWrapper {
+  width: 100%;
+  height: 100%;
+  transform-origin: center center;
+  transition: transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Wrapper Kloningan */
+.clone-item {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  pointer-events: none;
+  transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.6s ease;
+}
+
+/* HUD Container & Glassmorphism */
+#hudContainer {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 92%;
+  max-width: 390px;
+  background-image: linear-gradient(145deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.01) 100%);
+  transition: max-width 0.35s ease, padding 0.35s ease, border-radius 0.35s ease, bottom 0.35s ease;
+}
+
+/* Compact Mode (aktif saat body punya class .hud-compact) */
+body.hud-compact #hudContainer {
+  bottom: 16px;
+  max-width: 550px;
+  padding: 10px 18px;
+  border-radius: 9999px;
+}
+
+body.hud-compact .hide-on-compact {
+  display: none !important;
+}
+
+body.hud-compact .show-on-compact {
+  display: flex !important;
+}
+
+body.hud-compact #hudMainRow {
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+body.hud-compact #statusRow {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+body.hud-compact #timer {
+  font-size: 25px;
+  letter-spacing: 1px;
+}
+
+body.hud-compact #spotifyBox {
+  width: auto;
+  padding-top: 0;
+  border-top: none;
+  padding-left: 10px;
+  border-left: 1px solid rgba(255, 255, 255, 0.14);
+}
