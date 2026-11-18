@@ -17,12 +17,28 @@
     }
     input[type=number] { -moz-appearance: textfield; }
 
-    /* Kanvas 3D Full Screen */
-    model-viewer {
+    /* Wadah Kebun 3D */
+    #forestStage {
+      position: relative;
       width: 100%;
       height: 100%;
       background: radial-gradient(circle at center, #252432 0%, #111115 100%);
-      transition: background 0.6s ease, transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+      transition: background 0.6s ease;
+    }
+
+    #grownClones {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Kanvas 3D Utama */
+    model-viewer {
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
       transform-origin: center center;
       --poster-color: transparent;
     }
@@ -122,7 +138,7 @@
     .swatch:hover { transform: scale(1.15); }
     .swatch.active { border-color: #ffffff; transform: scale(1.15); }
 
-    /* SATU-SATUNYA HUD CONTAINER */
+    /* HUD CONTAINER */
     .hud-container {
       position: fixed;
       bottom: 24px;
@@ -412,7 +428,7 @@
       </span>
     </label>
 
-    <label class="toggle-wrap" title="Objek membesar dari kecil (30%) hingga penuh (100%) selama sesi Focus">
+    <label class="toggle-wrap" title="Objek membesar dari kecil (35%) hingga penuh (100%) selama sesi Focus">
       <span>Grow</span>
       <span class="switch">
         <input type="checkbox" id="growToggle" checked onchange="syncModelState()" />
@@ -428,15 +444,19 @@
     </div>
   </div>
 
-  <!-- Kanvas 3D -->
-  <model-viewer 
-    id="viewer"
-    src="https://modelviewer.dev/shared-assets/models/RobotExpressive.glb" 
-    alt="Lo-Fi 3D Scene"
-    camera-controls 
-    shadow-intensity="1"
-    exposure="0.9">
-  </model-viewer>
+  <!-- Wadah Kebun 3D -->
+  <div id="forestStage">
+    <div id="grownClones"></div>
+    <model-viewer 
+      id="viewer"
+      src="https://modelviewer.dev/shared-assets/models/RobotExpressive.glb" 
+      alt="Lo-Fi 3D Scene"
+      camera-controls 
+      shadow-intensity="1"
+      exposure="0.9"
+      style="position: relative; z-index: 2;">
+    </model-viewer>
+  </div>
 
   <!-- HUD Bawah -->
   <div class="hud-container">
@@ -540,6 +560,8 @@
     let baseTargetY = 0;
     let modelHeight = 1;
 
+    const forestStageEl = document.getElementById("forestStage");
+    const grownClonesEl = document.getElementById("grownClones");
     const viewerEl = document.getElementById("viewer");
     const modelSelect = document.getElementById("modelSelect");
     const motionToggle = document.getElementById("motionToggle");
@@ -562,7 +584,7 @@
     const trackNameEl = document.getElementById("trackName");
     const audioStatusEl = document.getElementById("audioStatus");
 
-    // --- 1. CAMERA FRAMING & GROWTH SCALE ---
+    // --- 1. CAMERA FRAMING, GROWTH SCALE & CLONES ---
     viewerEl.addEventListener("load", () => {
       const orbit = viewerEl.getCameraOrbit();
       const target = viewerEl.getCameraTarget();
@@ -578,10 +600,8 @@
     function updateCameraPosition() {
       if (!baseRadius) return;
       if (isRunning) {
-        // Saat timer start (HUD menyusut ke bawah) -> objek turun ke pusat layar
         viewerEl.setAttribute("camera-target", `0m ${baseTargetY}m 0m`);
       } else {
-        // Saat standby (HUD penuh) -> objek naik ke atas kotak HUD
         const offsetDown = modelHeight * 0.25;
         viewerEl.setAttribute("camera-target", `0m ${baseTargetY - offsetDown}m 0m`);
       }
@@ -609,20 +629,6 @@
       }
     }
 
-      if (currentPhase === "focus") {
-        const totalFocusSec = focusMinutes * 60;
-        const elapsed = Math.max(0, totalFocusSec - timeLeft);
-        const progress = Math.min(1, elapsed / totalFocusSec);
-
-        // Mulai dari 30% (bibit) dan tumbuh sampai 100% (dewasa)
-        const minScale = 0.30;
-        const s = (minScale + (1 - minScale) * progress).toFixed(4);
-        viewerEl.scale = `${s} ${s} ${s}`;
-      } else {
-        viewerEl.scale = "1 1 1";
-      }
-    }
-
     function syncModelState() {
       document.body.classList.toggle("focus-active", isRunning);
       updateCameraPosition();
@@ -643,6 +649,39 @@
       }
     }
 
+    function renderGrownClones() {
+      grownClonesEl.innerHTML = "";
+      const currentSrc = viewerEl.getAttribute("src");
+      const offsets = [-22, 22, -36, 36, -14, 14, -44, 44];
+      const count = Math.min(treesGrown, offsets.length);
+
+      for (let i = 0; i < count; i++) {
+        const clone = document.createElement("model-viewer");
+        clone.src = currentSrc;
+        clone.setAttribute("shadow-intensity", "0.8");
+        clone.setAttribute("exposure", "0.85");
+        clone.setAttribute("camera-orbit", `${(i % 2 === 0 ? 25 : -25)}deg 75deg auto`);
+        
+        const xOffset = offsets[i];
+        const yOffset = (i % 2 === 0) ? -4 : -8;
+        const cloneScale = 0.58;
+
+        clone.style.cssText = `
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          left: 0;
+          top: 0;
+          background: transparent;
+          opacity: 0.85;
+          transform: translate(${xOffset}%, ${yOffset}%) scale(${cloneScale});
+          transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+          pointer-events: none;
+        `;
+        grownClonesEl.appendChild(clone);
+      }
+    }
+
     function updateForestStageModel() {
       if (forestStageModels.length > 0) {
         const stageIdx = Math.min(treesGrown, forestStageModels.length - 1);
@@ -652,15 +691,17 @@
           modelSelect.value = targetFile;
         }
       }
+      renderGrownClones();
     }
 
     function changeModel(modelUrl) {
-      baseRadius = null; // Reset kalibrasi kamera untuk model baru
+      baseRadius = null;
       viewerEl.src = modelUrl;
+      renderGrownClones();
     }
 
     function changeBg(gradientCss, swatchEl) {
-      viewerEl.style.background = gradientCss;
+      forestStageEl.style.background = gradientCss;
       document.querySelectorAll(".swatch").forEach(s => s.classList.remove("active"));
       swatchEl.classList.add("active");
     }
