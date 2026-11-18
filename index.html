@@ -527,6 +527,24 @@
     const audioStatusEl = document.getElementById("audioStatus");
 
     // --- 1. ANIMASI & PERTUMBUHAN SKALA (GROWTH) 3D ---
+    let baseRadius = null;
+
+    // Saat model pertama kali dimuat pada ukuran penuh (1 1 1), simpan jarak kamera idealnya
+    viewerEl.addEventListener("load", () => {
+      viewerEl.setAttribute("scale", "1 1 1");
+      viewerEl.updateFraming();
+      
+      const orbit = viewerEl.getCameraOrbit();
+      baseRadius = orbit.radius;
+
+      // Kunci jarak kamera agar tidak zoom-in berlebihan saat objek dikecilkan
+      viewerEl.setAttribute("camera-orbit", `auto auto ${baseRadius}m`);
+      viewerEl.setAttribute("min-camera-orbit", `auto auto ${baseRadius * 0.6}m`);
+      viewerEl.setAttribute("max-camera-orbit", `auto auto ${baseRadius * 2.5}m`);
+
+      syncModelState();
+    });
+
     function updateModelGrowthScale() {
       if (!growToggle.checked) {
         viewerEl.setAttribute("scale", "1 1 1");
@@ -536,14 +554,13 @@
       if (currentPhase === "focus") {
         const totalFocusSec = focusMinutes * 60;
         const elapsed = Math.max(0, totalFocusSec - timeLeft);
-        const progress = Math.min(1, elapsed / totalFocusSec); // 0.0 -> 1.0
+        const progress = Math.min(1, elapsed / totalFocusSec);
 
-        // Mulai dari 0.25 (bibit) dan tumbuh sampai 1.0 (pohon dewasa penuh)
-        const minScale = 0.25;
+        // Tumbuh dari 30% hingga 100% ukuran normal (tidak pernah melebihi 1.0)
+        const minScale = 0.3;
         const currentScale = (minScale + (1 - minScale) * progress).toFixed(4);
         viewerEl.setAttribute("scale", `${currentScale} ${currentScale} ${currentScale}`);
       } else {
-        // Saat Break, pertahankan ukuran penuh hasil pertumbuhan
         viewerEl.setAttribute("scale", "1 1 1");
       }
     }
