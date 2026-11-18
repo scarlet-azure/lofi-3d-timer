@@ -238,10 +238,7 @@
   <!-- Top Bar: Pilih Model 3D & Ganti Warna BG -->
   <div class="top-bar">
     <select id="modelSelect" class="scene-select" onchange="changeModel(this.value)" title="Pilih Model 3D">
-      <option value="https://modelviewer.dev/shared-assets/models/Astronaut.glb">3D: Astronaut</option>
-      <option value="https://modelviewer.dev/shared-assets/models/RobotExpressive.glb">3D: Lo-Fi Robot</option>
-      <option value="https://modelviewer.dev/shared-assets/models/NeilArmstrong.glb">3D: Space Suit</option>
-      <option value="ruangan.glb">3D: My Custom Room (.glb)</option>
+      <option value="https://modelviewer.dev/shared-assets/models/Astronaut.glb">3D: Astronaut (Default)</option>
     </select>
 
     <div class="bg-swatches" title="Ganti Warna Background">
@@ -518,6 +515,66 @@
     }
 
     loadTrack(currentTrackIndex, false);
+
+    // --- AUTO-FETCH FILE .GLB & .MP3 DARI GITHUB REPO ---
+    const GITHUB_USER = "scarlet-azure";
+    const GITHUB_REPO = "lofi-3d-timer";
+
+    async function loadRepoAssets() {
+      const modelSelect = document.getElementById("modelSelect");
+      
+      // Tambahkan beberapa preset bawaan sebagai cadangan
+      const defaultModels = [
+        { name: "Lo-Fi Robot (Preset)", url: "https://modelviewer.dev/shared-assets/models/RobotExpressive.glb" }
+      ];
+
+      defaultModels.forEach(m => {
+        const opt = document.createElement("option");
+        opt.value = m.url;
+        opt.textContent = `3D: ${m.name}`;
+        modelSelect.appendChild(opt);
+      });
+
+      try {
+        const res = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/`);
+        if (!res.ok) return;
+        const files = await res.json();
+
+        // 1. Filter semua file .glb di repo & masukkan ke dropdown
+        const glbFiles = files.filter(f => f.name.toLowerCase().endsWith(".glb"));
+        glbFiles.forEach((file, index) => {
+          const opt = document.createElement("option");
+          opt.value = file.name; // Path relatif langsung di GitHub Pages
+          // Rapikan nama file (misal: "kamar-tidur.glb" -> "Kamar Tidur")
+          const cleanName = file.name.replace(/\.glb$/i, "").replace(/[-_]/g, " ");
+          opt.textContent = `3D: ${cleanName.replace(/\b\w/g, l => l.toUpperCase())}`;
+          modelSelect.appendChild(opt);
+
+          // Jika ada file .glb milikmu sendiri, otomatis jadikan tampilan pertama
+          if (index === 0) {
+            modelSelect.value = file.name;
+            changeModel(file.name);
+          }
+        });
+
+        // 2. Bonus: Otomatis tarik juga file .mp3 milikmu ke dalam playlist!
+        const mp3Files = files.filter(f => f.name.toLowerCase().endsWith(".mp3"));
+        if (mp3Files.length > 0) {
+          mp3Files.forEach(file => {
+            const cleanTitle = file.name.replace(/\.mp3$/i, "").replace(/[-_]/g, " ");
+            playlist.push({
+              title: `${cleanTitle.replace(/\b\w/g, l => l.toUpperCase())} (My Track)`,
+              url: file.name
+            });
+          });
+        }
+      } catch (err) {
+        console.log("Menggunakan aset default:", err);
+      }
+    }
+
+    // Jalankan saat halaman dibuka
+    loadRepoAssets();
   </script>
 </body>
 </html>
