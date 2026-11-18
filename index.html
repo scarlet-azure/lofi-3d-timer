@@ -6,101 +6,20 @@
   <title>Lo-Fi 3D Focus Timer</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
-  <style>
-    input[type=number]::-webkit-inner-spin-button, 
-    input[type=number]::-webkit-outer-spin-button { 
-      -webkit-appearance: none; 
-      margin: 0; 
-    }
-    input[type=number] { -moz-appearance: textfield; }
-
-    model-viewer {
-      --poster-color: transparent;
-      --progress-bar-color: transparent;
-      --progress-bar-height: 0px;
-      width: 100%;
-      height: 100%;
-      background: transparent;
-    }
-
-    /* Wrapper Skala Utama (terpisah dari model-viewer agar tidak bentrok dengan Tailwind) */
-    #mainScaleWrapper {
-      width: 100%;
-      height: 100%;
-      transform-origin: center center;
-      transition: transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
-    }
-
-    /* Animasi Tumbuh untuk Kloningan */
-    @keyframes cloneGrowAnim {
-      0% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(0.12); }
-      100% { opacity: 0.9; transform: translate(var(--tx), var(--ty)) scale(var(--ts)); }
-    }
-    .clone-grow-active {
-      animation: cloneGrowAnim 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-    }
-
-    /* HUD Stabil & Anti-Mental */
-    #hudContainer {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 92%;
-      max-width: 380px;
-      transition: max-width 0.35s ease, padding 0.35s ease, border-radius 0.35s ease, bottom 0.35s ease;
-    }
-
-    body.is-running #hudContainer {
-      bottom: 16px;
-      max-width: 520px;
-      padding: 10px 20px;
-      border-radius: 9999px;
-    }
-
-    body.is-running .hide-on-run {
-      display: none !important;
-    }
-
-    body.is-running #hudMainRow {
-      flex-direction: row;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-    }
-
-    body.is-running #statusRow {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 2px;
-    }
-
-    body.is-running #timer {
-      font-size: 26px;
-      letter-spacing: 1px;
-    }
-
-    body.is-running #spotifyBox {
-      width: auto;
-      padding-top: 0;
-      border-top: none;
-      padding-left: 12px;
-      border-left: 1px solid rgba(255, 255, 255, 0.12);
-    }
-  </style>
+  <link rel="stylesheet" href="style.css" />
 </head>
-<body class="bg-[#121216] text-zinc-100 overflow-hidden h-screen w-screen select-none antialiased">
+<body class="bg-[#0e0e12] text-zinc-100 overflow-hidden h-screen w-screen select-none antialiased">
 
   <!-- Top Control Bar -->
-  <header id="topBar" class="fixed top-4 left-1/2 -translate-x-1/2 z-30 flex flex-wrap items-center justify-center gap-2.5 px-4 py-2 rounded-full bg-zinc-900/80 backdrop-blur-md border border-white/10 shadow-2xl max-w-[96vw] transition-opacity duration-300">
+  <header id="topBar" class="fixed top-4 left-1/2 -translate-x-1/2 z-30 flex flex-wrap items-center justify-center gap-2.5 px-4 py-2 rounded-full bg-zinc-900/55 backdrop-blur-2xl backdrop-saturate-150 border border-white/15 ring-1 ring-inset ring-white/10 shadow-[0_12px_32px_rgba(0,0,0,0.5)] max-w-[96vw] transition-opacity duration-300">
     <!-- Dropdown Pilih Model -->
     <select id="modelSelect" onchange="changeModel(this.value)" class="bg-white/10 text-zinc-100 border border-white/15 rounded-full px-3 py-1 text-xs outline-none cursor-pointer hover:bg-white/15 transition">
       <option value="https://modelviewer.dev/shared-assets/models/RobotExpressive.glb" class="bg-zinc-900">3D: Lo-Fi Robot</option>
       <option value="https://modelviewer.dev/shared-assets/models/Astronaut.glb" class="bg-zinc-900">3D: Astronaut</option>
     </select>
 
-    <!-- Toggle: Move (Objek Utama) -->
-    <label class="flex items-center gap-1.5 pl-2.5 border-l border-white/10 text-[11px] text-zinc-300 cursor-pointer" title="Gerakkan objek utama">
+    <!-- Toggle: Move -->
+    <label class="flex items-center gap-1.5 pl-2.5 border-l border-white/10 text-[11px] text-zinc-300 cursor-pointer" title="Gerakkan objek utama saat timer berjalan">
       <span>Move</span>
       <div class="relative inline-flex items-center">
         <input type="checkbox" id="motionToggle" checked onchange="syncModelState()" class="sr-only peer">
@@ -108,8 +27,8 @@
       </div>
     </label>
 
-    <!-- Toggle: Grow (Objek Utama) -->
-    <label class="flex items-center gap-1.5 pl-2.5 border-l border-white/10 text-[11px] text-zinc-300 cursor-pointer" title="Objek utama membesar dari kecil (35%) hingga penuh (100%)">
+    <!-- Toggle: Grow -->
+    <label class="flex items-center gap-1.5 pl-2.5 border-l border-white/10 text-[11px] text-zinc-300 cursor-pointer" title="Objek utama tumbuh dari kecil (35%) ke penuh (100%)">
       <span>Grow</span>
       <div class="relative inline-flex items-center">
         <input type="checkbox" id="growToggle" checked onchange="syncModelState()" class="sr-only peer">
@@ -136,37 +55,38 @@
     </label>
 
     <!-- Toggle: Clone Grow -->
-    <label class="flex items-center gap-1.5 pl-2.5 border-l border-white/10 text-[11px] text-zinc-300 cursor-pointer" title="Kloningan tumbuh membesar saat muncul">
+    <label class="flex items-center gap-1.5 pl-2.5 border-l border-white/10 text-[11px] text-zinc-300 cursor-pointer" title="Nyala: Kloningan ikut tumbuh | Mati: Kloningan mengecil">
       <span>Clone Grow</span>
       <div class="relative inline-flex items-center">
-        <input type="checkbox" id="cloneGrowToggle" checked onchange="renderGrownClones()" class="sr-only peer">
+        <input type="checkbox" id="cloneGrowToggle" checked onchange="updateCloneScales()" class="sr-only peer">
         <div class="w-7 h-4 bg-white/15 rounded-full peer peer-checked:bg-[#1ed760] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white peer-checked:after:bg-zinc-950 after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:after:translate-x-3"></div>
       </div>
     </label>
 
     <!-- Swatches Warna BG -->
     <div class="flex items-center gap-1.5 pl-2.5 border-l border-white/10" title="Ganti Warna Background">
-      <button class="swatch w-4 h-4 rounded-full border-2 border-white scale-110 transition-transform cursor-pointer" style="background: #252432;" onclick="changeBg('radial-gradient(circle at center, #252432 0%, #111115 100%)', this)" title="Midnight"></button>
-      <button class="swatch w-4 h-4 rounded-full border-2 border-white/25 hover:scale-110 transition-transform cursor-pointer" style="background: #4a2c26;" onclick="changeBg('radial-gradient(circle at center, #4a2c26 0%, #170f0e 100%)', this)" title="Warm Sunset"></button>
-      <button class="swatch w-4 h-4 rounded-full border-2 border-white/25 hover:scale-110 transition-transform cursor-pointer" style="background: #223d35;" onclick="changeBg('radial-gradient(circle at center, #223d35 0%, #0d1714 100%)', this)" title="Matcha Forest"></button>
-      <button class="swatch w-4 h-4 rounded-full border-2 border-white/25 hover:scale-110 transition-transform cursor-pointer" style="background: #253954;" onclick="changeBg('radial-gradient(circle at center, #253954 0%, #0d131c 100%)', this)" title="Deep Ocean"></button>
+      <button class="swatch w-4 h-4 rounded-full border-2 border-white scale-110 transition-transform cursor-pointer" style="background: #252432;" onclick="changeBg('radial-gradient(circle at center, #252432 0%, #0e0e12 100%)', this)" title="Midnight"></button>
+      <button class="swatch w-4 h-4 rounded-full border-2 border-white/25 hover:scale-110 transition-transform cursor-pointer" style="background: #4a2c26;" onclick="changeBg('radial-gradient(circle at center, #4a2c26 0%, #140c0b 100%)', this)" title="Warm Sunset"></button>
+      <button class="swatch w-4 h-4 rounded-full border-2 border-white/25 hover:scale-110 transition-transform cursor-pointer" style="background: #223d35;" onclick="changeBg('radial-gradient(circle at center, #223d35 0%, #0b1411 100%)', this)" title="Matcha Forest"></button>
+      <button class="swatch w-4 h-4 rounded-full border-2 border-white/25 hover:scale-110 transition-transform cursor-pointer" style="background: #253954;" onclick="changeBg('radial-gradient(circle at center, #253954 0%, #0b1017 100%)', this)" title="Deep Ocean"></button>
     </div>
   </header>
 
   <!-- Wadah Kebun 3D -->
-  <main id="forestStage" class="relative w-full h-full transition-colors duration-500" style="background: radial-gradient(circle at center, #252432 0%, #111115 100%);">
+  <main id="forestStage" class="relative w-full h-full transition-colors duration-500" style="background: radial-gradient(circle at center, #252432 0%, #0e0e12 100%);">
     <!-- Layer Kloningan -->
     <div id="grownClones" class="absolute inset-0 pointer-events-none z-10"></div>
 
-    <!-- Wrapper Objek Utama -->
-    <div id="mainStageBox" class="relative w-full h-full z-20 flex items-center justify-center transition-all duration-500 ease-out">
+    <!-- Wrapper Objek Utama (Full 100% viewport tanpa padding bawah agar tidak terpotong garis horizontal) -->
+    <div id="mainStageBox" class="relative w-full h-full z-20 flex items-center justify-center">
       <div id="mainScaleWrapper">
         <model-viewer 
           id="viewer"
           src="https://modelviewer.dev/shared-assets/models/RobotExpressive.glb" 
           alt="Lo-Fi 3D Scene"
           camera-controls 
-          min-camera-orbit="auto auto 105%"
+          field-of-view="30deg"
+          min-camera-orbit="auto auto 135%"
           max-camera-orbit="auto auto 300%"
           shadow-intensity="1"
           exposure="0.95">
@@ -176,18 +96,30 @@
     </div>
   </main>
 
-  <!-- HUD Bawah -->
-  <section id="hudContainer" class="z-30 bg-zinc-900/85 backdrop-blur-xl border border-white/10 rounded-3xl px-5 py-4 flex flex-col items-center gap-2.5 shadow-[0_24px_48px_rgba(0,0,0,0.6)]">
+  <!-- HUD Bawah (Premium Layered Glassmorphism) -->
+  <section id="hudContainer" class="z-30 bg-zinc-900/55 backdrop-blur-2xl backdrop-saturate-150 border border-white/15 ring-1 ring-inset ring-white/10 rounded-3xl px-5 py-4 flex flex-col items-center gap-2.5 shadow-[0_24px_60px_-15px_rgba(0,0,0,0.8)]">
     
-    <!-- Preset & Custom Lap Tabs -->
-    <div id="hudTabs" class="hide-on-run flex items-center gap-1.5">
-      <button class="mode-btn px-3 py-1 rounded-full text-[11px] font-semibold bg-zinc-100 text-zinc-950 border border-zinc-100 transition cursor-pointer" id="preset25Btn" onclick="applyPreset(25, 5, 4, this)">25 / 5 (4x)</button>
-      <button class="mode-btn px-3 py-1 rounded-full text-[11px] text-zinc-400 border border-white/15 hover:text-white transition cursor-pointer" id="preset50Btn" onclick="applyPreset(50, 10, 2, this)">50 / 10 (2x)</button>
-      <button class="mode-btn px-3 py-1 rounded-full text-[11px] text-zinc-400 border border-white/15 hover:text-white transition cursor-pointer" id="customModeBtn" onclick="toggleCustomPanel(this)">Custom Lap</button>
+    <!-- Baris Atas HUD: Preset Tabs + Tombol Minimize saat Timer Jalan -->
+    <div class="w-full flex items-center justify-between gap-1.5 hide-on-compact">
+      <div id="hudTabs" class="flex items-center gap-1.5">
+        <button class="mode-btn px-3 py-1 rounded-full text-[11px] font-semibold bg-zinc-100 text-zinc-950 border border-zinc-100 transition cursor-pointer" id="preset25Btn" onclick="applyPreset(25, 5, 4, this)">25 / 5 (4x)</button>
+        <button class="mode-btn px-3 py-1 rounded-full text-[11px] text-zinc-400 border border-white/15 hover:text-white transition cursor-pointer" id="preset50Btn" onclick="applyPreset(50, 10, 2, this)">50 / 10 (2x)</button>
+        <button class="mode-btn px-3 py-1 rounded-full text-[11px] text-zinc-400 border border-white/15 hover:text-white transition cursor-pointer" id="customModeBtn" onclick="toggleCustomPanel(this)">Custom</button>
+      </div>
+
+      <!-- Tombol Perkecil HUD -->
+      <button id="collapseHudBtn" onclick="toggleHudSize()" title="Perkecil HUD (Compact Mode)" class="hidden w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-zinc-300 hover:text-white items-center justify-center transition cursor-pointer">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="4 14 10 14 10 20"></polyline>
+          <polyline points="20 10 14 10 14 4"></polyline>
+          <line x1="14" y1="10" x2="21" y2="3"></line>
+          <line x1="3" y1="21" x2="10" y2="14"></line>
+        </svg>
+      </button>
     </div>
 
     <!-- Panel Input Custom Focus, Break & Laps -->
-    <div id="customPanel" class="hide-on-run hidden grid-cols-4 gap-2 items-end w-full bg-white/5 border border-white/10 p-2.5 rounded-xl">
+    <div id="customPanel" class="hide-on-compact hidden grid-cols-4 gap-2 items-end w-full bg-white/[0.04] border border-white/10 p-2.5 rounded-xl">
       <div class="flex flex-col items-center gap-1">
         <label class="text-[9px] uppercase tracking-wider text-zinc-400">Focus (m)</label>
         <input type="number" id="focusInput" min="1" max="180" value="25" class="w-full bg-white/10 border border-white/15 text-white py-1 rounded-lg text-center text-xs font-semibold outline-none focus:border-[#1ed760]" />
@@ -203,13 +135,13 @@
       <button onclick="applyCustomSettings()" class="h-7 rounded-lg bg-zinc-100 text-zinc-950 text-xs font-semibold hover:bg-white transition cursor-pointer">Set</button>
     </div>
 
-    <!-- Baris Utama (Status + Timer + Tombol + Spotify Mini) -->
+    <!-- Baris Utama -->
     <div id="hudMainRow" class="flex flex-col items-center gap-2.5 w-full">
       <!-- Status Phase & Lap -->
       <div id="statusRow" class="flex items-center gap-2 text-[10px] font-semibold tracking-wider text-zinc-400 uppercase">
         <span id="phaseBadge" class="px-2 py-0.5 rounded-full bg-white/10 text-zinc-100">FOCUS</span>
         <span id="lapText">LAP 1 / 4</span>
-        <div id="lapDots" class="hide-on-run flex gap-1"></div>
+        <div id="lapDots" class="hide-on-compact flex gap-1"></div>
         <span id="forestCount" class="px-2 py-0.5 rounded-full bg-[#1ed760]/15 text-[#1ed760]">🌲 0</span>
       </div>
 
@@ -225,13 +157,13 @@
 
       <!-- Spotify-Style Audio Player -->
       <div id="spotifyBox" class="w-full pt-2.5 border-t border-white/10 flex flex-col gap-2">
-        <div id="trackInfoRow" class="hide-on-run flex justify-between items-center text-[11px]">
+        <div id="trackInfoRow" class="hide-on-compact flex justify-between items-center text-[11px]">
           <span id="trackName" class="text-zinc-200 font-medium truncate max-w-[230px]">Midnight Rhodes & Rain (Synth)</span>
           <span id="audioStatus" class="text-[9px] px-2 py-0.5 rounded-full bg-[#1ed760]/20 text-[#1ed760] font-bold">READY</span>
         </div>
 
-        <div class="flex items-center justify-between gap-3">
-          <div class="flex items-center gap-3">
+        <div class="flex items-center justify-between gap-2.5">
+          <div class="flex items-center gap-2.5">
             <!-- Shuffle -->
             <button onclick="playRandomTrack()" title="Shuffle Track" class="text-[#1ed760] hover:scale-110 transition cursor-pointer">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -262,14 +194,12 @@
           </div>
 
           <!-- Mute Toggle Icon + Volume Slider -->
-          <div id="volumeBox" class="hide-on-run flex items-center gap-1.5 flex-1 max-w-[115px]">
+          <div id="volumeBox" class="hide-on-compact flex items-center gap-1.5 flex-1 max-w-[115px]">
             <button id="muteBtn" onclick="toggleMute()" title="Mute / Unmute" class="text-zinc-400 hover:text-white transition cursor-pointer flex items-center justify-center">
-              <!-- Speaker On Icon -->
               <svg id="volOnIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
                 <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
               </svg>
-              <!-- Speaker Muted Icon -->
               <svg id="volMuteIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden">
                 <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
                 <line x1="23" y1="9" x2="17" y2="15"></line>
@@ -278,635 +208,22 @@
             </button>
             <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="0.5" oninput="changeVolume(this.value)" class="w-full h-1 accent-[#1ed760] cursor-pointer" />
           </div>
+
+          <!-- Tombol Perbesar HUD -->
+          <button id="expandHudBtn" onclick="toggleHudSize()" title="Perbesar HUD (Lihat Lagu, Volume & Preset)" class="show-on-compact hidden w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-zinc-300 hover:text-white items-center justify-center transition cursor-pointer">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <polyline points="9 21 3 21 3 15"></polyline>
+              <line x1="21" y1="3" x2="14" y2="10"></line>
+              <line x1="3" y1="21" x2="10" y2="14"></line>
+            </svg>
+          </button>
         </div>
       </div>
     </div>
   </section>
 
   <audio id="bgAudio"></audio>
-
-  <script>
-    let focusMinutes = 25;
-    let breakMinutes = 5;
-    let totalLaps = 4;
-    let currentLap = 1;
-    let treesGrown = 0;
-    let currentPhase = "focus";
-    let timeLeft = focusMinutes * 60;
-    let timerId = null;
-    let isRunning = false;
-    let forestStageModels = [];
-
-    const topBarEl = document.getElementById("topBar");
-    const forestStageEl = document.getElementById("forestStage");
-    const grownClonesEl = document.getElementById("grownClones");
-    const mainStageBoxEl = document.getElementById("mainStageBox");
-    const mainScaleWrapperEl = document.getElementById("mainScaleWrapper");
-    const viewerEl = document.getElementById("viewer");
-    const modelSelect = document.getElementById("modelSelect");
-
-    const motionToggle = document.getElementById("motionToggle");
-    const growToggle = document.getElementById("growToggle");
-    const cloneToggle = document.getElementById("cloneToggle");
-    const cloneMoveToggle = document.getElementById("cloneMoveToggle");
-    const cloneGrowToggle = document.getElementById("cloneGrowToggle");
-
-    const customPanel = document.getElementById("customPanel");
-    const lapDotsEl = document.getElementById("lapDots");
-    const timerEl = document.getElementById("timer");
-    const startBtn = document.getElementById("startBtn");
-
-    const phaseBadge = document.getElementById("phaseBadge");
-    const lapText = document.getElementById("lapText");
-    const forestCountEl = document.getElementById("forestCount");
-    const focusInput = document.getElementById("focusInput");
-    const breakInput = document.getElementById("breakInput");
-    const lapsInput = document.getElementById("lapsInput");
-
-    const bgAudio = document.getElementById("bgAudio");
-    const playIcon = document.getElementById("playIcon");
-    const pauseIcon = document.getElementById("pauseIcon");
-    const trackNameEl = document.getElementById("trackName");
-    const audioStatusEl = document.getElementById("audioStatus");
-    const volumeSlider = document.getElementById("volumeSlider");
-    const volOnIcon = document.getElementById("volOnIcon");
-    const volMuteIcon = document.getElementById("volMuteIcon");
-
-    // --- 1. HUD COMPACT MODE & STAGE POSITIONING ---
-    function updateHudLayout() {
-      document.body.classList.toggle("is-running", isRunning);
-      if (isRunning) {
-        topBarEl.classList.add("opacity-50", "hover:opacity-100");
-        mainStageBoxEl.classList.remove("pb-56");
-        mainStageBoxEl.classList.add("pb-16");
-      } else {
-        topBarEl.classList.remove("opacity-50", "hover:opacity-100");
-        mainStageBoxEl.classList.add("pb-56");
-        mainStageBoxEl.classList.remove("pb-16");
-      }
-    }
-
-    // --- 2. GROWTH SCALE, MOTION & CLONES ---
-    function updateModelGrowthScale() {
-      if (!growToggle.checked) {
-        mainScaleWrapperEl.style.transform = "scale(1)";
-        return;
-      }
-
-      if (currentPhase === "focus") {
-        const totalFocusSec = focusMinutes * 60;
-        const elapsed = Math.max(0, totalFocusSec - timeLeft);
-        const progress = Math.min(1, elapsed / totalFocusSec);
-
-        // Tumbuh dari 0.35 (35%) hingga 1.0 (100%)
-        const minScale = 0.35;
-        const s = (minScale + (1 - minScale) * progress).toFixed(4);
-        mainScaleWrapperEl.style.transform = `scale(${s})`;
-      } else {
-        mainScaleWrapperEl.style.transform = "scale(1)";
-      }
-    }
-
-    // Gunakan properti DOM langsung (.autoRotate, .play(), .pause()) agar 100% responsif
-    function applyMotionToElement(el, active) {
-      if (!el) return;
-      if (active) {
-        el.autoRotate = true;
-        el.rotationPerSecond = currentPhase === "focus" ? "15deg" : "6deg";
-        if (el.availableAnimations && el.availableAnimations.length > 0) {
-          const preferred = el.availableAnimations.find(a => /idle|walk|dance|wave|grow/i.test(a));
-          el.animationName = preferred || el.availableAnimations[0];
-        }
-        if (typeof el.play === "function") {
-          el.play();
-        }
-      } else {
-        el.autoRotate = false;
-        if (typeof el.pause === "function") {
-          el.pause();
-        }
-      }
-    }
-
-    function syncModelState() {
-      updateHudLayout();
-      updateModelGrowthScale();
-
-      // Gerak objek utama: aktif jika toggle Move nyala (baik saat timer jalan atau dipreview)
-      // Catatan: saat timer jalan mengikuti Move, saat standby diam kecuali Move di-toggle manual
-      const mainShouldMove = isRunning && motionToggle.checked;
-      applyMotionToElement(viewerEl, mainShouldMove);
-
-      // Gerak kloningan: dikontrol terpisah oleh Clone Move
-      const clonesShouldMove = isRunning && cloneMoveToggle.checked;
-      grownClonesEl.querySelectorAll("model-viewer").forEach(cloneEl => {
-        applyMotionToElement(cloneEl, clonesShouldMove);
-      });
-    }
-
-    function renderGrownClones() {
-      grownClonesEl.innerHTML = "";
-      if (!cloneToggle.checked || treesGrown <= 0) return;
-
-      const currentSrc = viewerEl.getAttribute("src");
-      const offsets = [-23, 23, -37, 37, -14, 14, -45, 45];
-      const count = Math.min(treesGrown, offsets.length);
-
-      for (let i = 0; i < count; i++) {
-        const clone = document.createElement("model-viewer");
-        clone.src = currentSrc;
-        clone.shadowIntensity = 0.8;
-        clone.exposure = 0.85;
-        clone.cameraOrbit = `${(i % 2 === 0 ? 25 : -25)}deg 75deg auto`;
-        
-        const xOffset = offsets[i];
-        const yOffset = (i % 2 === 0) ? -6 : -11;
-        const cloneScale = 0.52;
-
-        clone.style.setProperty("--tx", `${xOffset}%`);
-        clone.style.setProperty("--ty", `${yOffset}%`);
-        clone.style.setProperty("--ts", `${cloneScale}`);
-        clone.style.position = "absolute";
-        clone.style.width = "100%";
-        clone.style.height = "100%";
-        clone.style.left = "0";
-        clone.style.top = "0";
-        clone.style.background = "transparent";
-        clone.style.pointerEvents = "none";
-
-        if (cloneGrowToggle.checked) {
-          clone.classList.add("clone-grow-active");
-        } else {
-          clone.style.opacity = "0.9";
-          clone.style.transform = `translate(${xOffset}%, ${yOffset}%) scale(${cloneScale})`;
-        }
-
-        clone.addEventListener("load", () => {
-          applyMotionToElement(clone, isRunning && cloneMoveToggle.checked);
-        });
-
-        grownClonesEl.appendChild(clone);
-      }
-    }
-
-    viewerEl.addEventListener("load", syncModelState);
-
-    function updateForestStageModel() {
-      if (forestStageModels.length > 0) {
-        const stageIdx = Math.min(treesGrown, forestStageModels.length - 1);
-        const targetFile = forestStageModels[stageIdx];
-        if (viewerEl.getAttribute("src") !== targetFile) {
-          viewerEl.src = targetFile;
-          modelSelect.value = targetFile;
-        }
-      }
-      renderGrownClones();
-    }
-
-    function changeModel(modelUrl) {
-      viewerEl.src = modelUrl;
-      renderGrownClones();
-    }
-
-    function changeBg(gradientCss, swatchEl) {
-      forestStageEl.style.background = gradientCss;
-      document.querySelectorAll(".swatch").forEach(s => {
-        s.classList.remove("border-white", "scale-110");
-        s.classList.add("border-white/25");
-      });
-      swatchEl.classList.remove("border-white/25");
-      swatchEl.classList.add("border-white", "scale-110");
-    }
-
-    // --- 3. GENTLE CHIME ---
-    function playChime() {
-      if (isMuted) return;
-      try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(528, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(792, ctx.currentTime + 0.4);
-        gain.gain.setValueAtTime(0.15, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.2);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + 1.2);
-      } catch (e) {}
-    }
-
-    // --- 4. TIMER & LAP LOGIC ---
-    function renderSessionUI() {
-      const mins = Math.floor(timeLeft / 60).toString().padStart(2, "0");
-      const secs = (timeLeft % 60).toString().padStart(2, "0");
-      timerEl.textContent = `${mins}:${secs}`;
-      document.title = `${mins}:${secs} (${currentPhase.toUpperCase()} ${currentLap}/${totalLaps})`;
-
-      phaseBadge.textContent = currentPhase === "focus" ? "FOCUS" : "BREAK";
-      if (currentPhase === "break") {
-        phaseBadge.classList.remove("bg-white/10", "text-zinc-100");
-        phaseBadge.classList.add("bg-sky-400/20", "text-sky-400");
-      } else {
-        phaseBadge.classList.add("bg-white/10", "text-zinc-100");
-        phaseBadge.classList.remove("bg-sky-400/20", "text-sky-400");
-      }
-
-      lapText.textContent = `LAP ${currentLap} / ${totalLaps}`;
-      forestCountEl.textContent = `🌲 ${treesGrown}`;
-
-      lapDotsEl.innerHTML = "";
-      for (let i = 1; i <= totalLaps; i++) {
-        const dot = document.createElement("span");
-        dot.className = "w-1.5 h-1.5 rounded-full transition-all ";
-        if (i < currentLap) dot.className += "bg-[#1ed760]";
-        else if (i === currentLap) dot.className += "bg-white scale-125";
-        else dot.className += "bg-white/20";
-        lapDotsEl.appendChild(dot);
-      }
-    }
-
-    function handlePhaseComplete(autoContinue = true) {
-      playChime();
-
-      if (currentPhase === "focus") {
-        treesGrown++;
-        updateForestStageModel();
-
-        if (currentLap >= totalLaps) {
-          clearInterval(timerId);
-          isRunning = false;
-          startBtn.textContent = "Start";
-          timeLeft = 0;
-          updateModelGrowthScale();
-
-          currentLap = totalLaps + 1;
-          renderSessionUI();
-          lapText.textContent = `DONE (${totalLaps}/${totalLaps})`;
-          currentLap = 1;
-          timeLeft = focusMinutes * 60;
-          syncModelState();
-          return;
-        }
-        currentPhase = "break";
-        timeLeft = breakMinutes * 60;
-      } else {
-        currentPhase = "focus";
-        currentLap++;
-        timeLeft = focusMinutes * 60;
-      }
-
-      renderSessionUI();
-      syncModelState();
-
-      if (!autoContinue) {
-        clearInterval(timerId);
-        isRunning = false;
-        startBtn.textContent = "Start";
-        syncModelState();
-      }
-    }
-
-    function toggleTimer() {
-      if (isRunning) {
-        clearInterval(timerId);
-        startBtn.textContent = "Resume";
-        isRunning = false;
-      } else {
-        isRunning = true;
-        startBtn.textContent = "Pause";
-        customPanel.classList.add("hidden");
-        customPanel.classList.remove("grid");
-        timerId = setInterval(() => {
-          if (timeLeft > 0) {
-            timeLeft--;
-            renderSessionUI();
-            updateModelGrowthScale();
-          } else {
-            handlePhaseComplete(true);
-          }
-        }, 1000);
-      }
-      syncModelState();
-    }
-
-    function skipPhase() {
-      handlePhaseComplete(isRunning);
-    }
-
-    function resetSession() {
-      clearInterval(timerId);
-      isRunning = false;
-      currentPhase = "focus";
-      currentLap = 1;
-      treesGrown = 0;
-      timeLeft = focusMinutes * 60;
-      startBtn.textContent = "Start";
-      updateForestStageModel();
-      renderSessionUI();
-      syncModelState();
-    }
-
-    function setActiveTab(activeBtn) {
-      document.querySelectorAll(".mode-btn").forEach(b => {
-        b.classList.remove("bg-zinc-100", "text-zinc-950", "border-zinc-100", "font-semibold");
-        b.classList.add("text-zinc-400", "border-white/15");
-      });
-      activeBtn.classList.remove("text-zinc-400", "border-white/15");
-      activeBtn.classList.add("bg-zinc-100", "text-zinc-950", "border-zinc-100", "font-semibold");
-    }
-
-    function applyPreset(fMins, bMins, laps, btnEl) {
-      setActiveTab(btnEl);
-      customPanel.classList.add("hidden");
-      customPanel.classList.remove("grid");
-
-      focusMinutes = fMins;
-      breakMinutes = bMins;
-      totalLaps = laps;
-
-      focusInput.value = fMins;
-      breakInput.value = bMins;
-      lapsInput.value = laps;
-
-      resetSession();
-    }
-
-    function toggleCustomPanel(btnEl) {
-      setActiveTab(btnEl);
-      if (customPanel.classList.contains("hidden")) {
-        customPanel.classList.remove("hidden");
-        customPanel.classList.add("grid");
-      } else {
-        customPanel.classList.add("hidden");
-        customPanel.classList.remove("grid");
-      }
-    }
-
-    function applyCustomSettings() {
-      const f = parseInt(focusInput.value, 10);
-      const b = parseInt(breakInput.value, 10);
-      const l = parseInt(lapsInput.value, 10);
-
-      if (f > 0 && f <= 180) focusMinutes = f;
-      if (b > 0 && b <= 60) breakMinutes = b;
-      if (l > 0 && l <= 20) totalLaps = l;
-
-      customPanel.classList.add("hidden");
-      customPanel.classList.remove("grid");
-      resetSession();
-    }
-
-    // --- 5. BUILT-IN LO-FI SYNTH ENGINE + MP3 PLAYLIST + MUTE TOGGLE ---
-    const playlist = [
-      { title: "Midnight Rhodes & Rain (Synth)", type: "synth", chords: [[261.63, 329.63, 392.00, 493.88], [220.00, 261.63, 329.63, 392.00], [174.61, 220.00, 261.63, 329.63], [196.00, 246.94, 293.66, 349.23]] },
-      { title: "Warm Sunset Jazz Chords (Synth)", type: "synth", chords: [[293.66, 349.23, 440.00, 523.25], [196.00, 246.94, 293.66, 349.23], [261.63, 329.63, 392.00, 493.88], [220.00, 261.63, 329.63, 392.00]] }
-    ];
-
-    let currentTrackIndex = 0;
-    let isAudioPlaying = false;
-    let masterVolume = 0.5;
-    let previousVolume = 0.5;
-    let isMuted = false;
-    let synthCtx = null;
-    let synthInterval = null;
-    let rainNode = null;
-    let masterGain = null;
-
-    bgAudio.volume = masterVolume;
-
-    function updateVolumeUI() {
-      const effectiveVol = isMuted ? 0 : masterVolume;
-      bgAudio.volume = effectiveVol;
-      volumeSlider.value = effectiveVol;
-
-      if (masterGain && synthCtx) {
-        masterGain.gain.setTargetAtTime(effectiveVol * 0.35, synthCtx.currentTime, 0.05);
-      }
-
-      if (isMuted || effectiveVol === 0) {
-        volOnIcon.classList.add("hidden");
-        volMuteIcon.classList.remove("hidden");
-      } else {
-        volOnIcon.classList.remove("hidden");
-        volMuteIcon.classList.add("hidden");
-      }
-    }
-
-    function toggleMute() {
-      if (isMuted) {
-        isMuted = false;
-        masterVolume = previousVolume > 0 ? previousVolume : 0.5;
-      } else {
-        previousVolume = masterVolume;
-        isMuted = true;
-      }
-      updateVolumeUI();
-    }
-
-    function changeVolume(val) {
-      const v = parseFloat(val);
-      masterVolume = v;
-      isMuted = (v === 0);
-      if (v > 0) previousVolume = v;
-      updateVolumeUI();
-    }
-
-    function setPlayingUI(playing) {
-      isAudioPlaying = playing;
-      if (playing) {
-        playIcon.classList.add("hidden");
-        pauseIcon.classList.remove("hidden");
-        audioStatusEl.textContent = "PLAYING";
-      } else {
-        playIcon.classList.remove("hidden");
-        pauseIcon.classList.add("hidden");
-        audioStatusEl.textContent = "PAUSED";
-      }
-    }
-
-    function stopSynth() {
-      if (synthInterval) {
-        clearInterval(synthInterval);
-        synthInterval = null;
-      }
-      if (rainNode) {
-        try { rainNode.stop(); } catch (e) {}
-        rainNode = null;
-      }
-    }
-
-    function startSynth(track) {
-      stopSynth();
-      if (!synthCtx) {
-        synthCtx = new (window.AudioContext || window.webkitAudioContext)();
-      }
-      if (synthCtx.state === "suspended") synthCtx.resume();
-
-      masterGain = synthCtx.createGain();
-      masterGain.gain.value = (isMuted ? 0 : masterVolume) * 0.35;
-      masterGain.connect(synthCtx.destination);
-
-      const bufferSize = synthCtx.sampleRate * 2;
-      const noiseBuffer = synthCtx.createBuffer(1, bufferSize, synthCtx.sampleRate);
-      const output = noiseBuffer.getChannelData(0);
-      let lastOut = 0.0;
-      for (let i = 0; i < bufferSize; i++) {
-        const white = Math.random() * 2 - 1;
-        output[i] = (lastOut + (0.02 * white)) / 1.02;
-        lastOut = output[i];
-        output[i] *= 0.18;
-      }
-      rainNode = synthCtx.createBufferSource();
-      rainNode.buffer = noiseBuffer;
-      rainNode.loop = true;
-
-      const filter = synthCtx.createBiquadFilter();
-      filter.type = "lowpass";
-      filter.frequency.value = 850;
-      rainNode.connect(filter);
-      filter.connect(masterGain);
-      rainNode.start();
-
-      let step = 0;
-      const playChord = () => {
-        if (!isAudioPlaying) return;
-        const chord = track.chords[step % track.chords.length];
-        step++;
-
-        chord.forEach((freq, idx) => {
-          const osc = synthCtx.createOscillator();
-          const noteGain = synthCtx.createGain();
-          osc.type = "triangle";
-          osc.frequency.setValueAtTime(freq, synthCtx.currentTime + idx * 0.04);
-
-          noteGain.gain.setValueAtTime(0.001, synthCtx.currentTime + idx * 0.04);
-          noteGain.gain.linearRampToValueAtTime(0.14, synthCtx.currentTime + idx * 0.04 + 0.15);
-          noteGain.gain.exponentialRampToValueAtTime(0.0008, synthCtx.currentTime + 3.0);
-
-          osc.connect(noteGain);
-          noteGain.connect(masterGain);
-          osc.start(synthCtx.currentTime + idx * 0.04);
-          osc.stop(synthCtx.currentTime + 3.1);
-        });
-      };
-
-      playChord();
-      synthInterval = setInterval(playChord, 3200);
-    }
-
-    function stopAllAudio() {
-      bgAudio.pause();
-      stopSynth();
-      setPlayingUI(false);
-    }
-
-    function loadTrack(index, autoPlay = false) {
-      currentTrackIndex = index;
-      const track = playlist[currentTrackIndex];
-      trackNameEl.textContent = track.title;
-
-      bgAudio.pause();
-      stopSynth();
-
-      if (autoPlay) {
-        if (track.type === "synth") {
-          setPlayingUI(true);
-          startSynth(track);
-        } else {
-          bgAudio.src = track.url;
-          bgAudio.play().then(() => {
-            setPlayingUI(true);
-          }).catch(() => {
-            playNextTrack();
-          });
-        }
-      } else {
-        setPlayingUI(false);
-      }
-    }
-
-    function playNextTrack() {
-      const nextIndex = (currentTrackIndex + 1) % playlist.length;
-      loadTrack(nextIndex, true);
-    }
-
-    function playRandomTrack() {
-      if (playlist.length <= 1) {
-        loadTrack(0, true);
-        return;
-      }
-      let nextIndex;
-      do {
-        nextIndex = Math.floor(Math.random() * playlist.length);
-      } while (nextIndex === currentTrackIndex);
-      loadTrack(nextIndex, true);
-    }
-
-    bgAudio.addEventListener("ended", playRandomTrack);
-
-    function toggleAudio() {
-      if (isAudioPlaying) {
-        stopAllAudio();
-      } else {
-        loadTrack(currentTrackIndex, true);
-      }
-    }
-
-    // --- 6. AUTO-FETCH FILE .GLB & .MP3 DARI GITHUB REPO ---
-    const GITHUB_USER = "scarlet-azure";
-    const GITHUB_REPO = "lofi-3d-timer";
-
-    async function initApp() {
-      renderSessionUI();
-
-      try {
-        const res = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/`);
-        if (res.ok) {
-          const files = await res.json();
-
-          const glbFiles = files
-            .filter(f => f.name.toLowerCase().endsWith(".glb"))
-            .sort((a, b) => a.name.localeCompare(b.name));
-
-          forestStageModels = glbFiles
-            .filter(f => /(tree|forest|stage|lap)[-_]?\d+\.glb$/i.test(f.name))
-            .map(f => f.name);
-
-          glbFiles.forEach((file, index) => {
-            const opt = document.createElement("option");
-            opt.value = file.name;
-            const cleanName = file.name.replace(/\.glb$/i, "").replace(/[-_]/g, " ");
-            opt.textContent = `3D: ${cleanName.replace(/\b\w/g, l => l.toUpperCase())}`;
-            opt.className = "bg-zinc-900";
-            modelSelect.appendChild(opt);
-
-            if (index === 0) {
-              modelSelect.value = file.name;
-              changeModel(file.name);
-            }
-          });
-
-          const mp3Files = files.filter(f => f.name.toLowerCase().endsWith(".mp3"));
-          mp3Files.forEach(file => {
-            const cleanTitle = file.name.replace(/\.mp3$/i, "").replace(/[-_]/g, " ");
-            playlist.unshift({
-              title: `${cleanTitle.replace(/\b\w/g, l => l.toUpperCase())} (My Track)`,
-              type: "mp3",
-              url: file.name
-            });
-          });
-        }
-      } catch (err) {
-        console.log("Menggunakan aset default:", err);
-      }
-
-      loadTrack(0, false);
-      syncModelState();
-    }
-
-    initApp();
-  </script>
+  <script src="app.js"></script>
 </body>
 </html>
