@@ -31,6 +31,7 @@
       inset: 0;
       pointer-events: none;
       z-index: 1;
+      transition: opacity 0.4s ease;
     }
 
     /* Kanvas 3D Utama */
@@ -46,26 +47,26 @@
     /* Top Bar */
     .top-bar {
       position: fixed;
-      top: 20px;
+      top: 16px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(24, 24, 30, 0.68);
+      background: rgba(24, 24, 30, 0.72);
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
       border: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: 999px;
-      padding: 7px 16px;
+      padding: 6px 14px;
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
-      z-index: 20;
-      max-width: 95vw;
+      z-index: 30;
+      max-width: 96vw;
       flex-wrap: wrap;
       justify-content: center;
       transition: opacity 0.4s ease;
     }
-    body.focus-active .top-bar { opacity: 0.5; }
+    body.focus-active .top-bar { opacity: 0.55; }
     body.focus-active .top-bar:hover { opacity: 1; }
 
     .scene-select {
@@ -73,8 +74,8 @@
       color: #f4f4f6;
       border: 1px solid rgba(255, 255, 255, 0.15);
       border-radius: 999px;
-      padding: 5px 12px;
-      font-size: 12px;
+      padding: 4px 10px;
+      font-size: 11px;
       outline: none;
       cursor: pointer;
     }
@@ -83,8 +84,8 @@
     .toggle-wrap {
       display: flex;
       align-items: center;
-      gap: 6px;
-      font-size: 12px;
+      gap: 5px;
+      font-size: 11px;
       color: #d4d4d8;
       cursor: pointer;
       user-select: none;
@@ -94,8 +95,8 @@
     .switch {
       position: relative;
       display: inline-block;
-      width: 32px;
-      height: 18px;
+      width: 30px;
+      height: 16px;
     }
     .switch input { opacity: 0; width: 0; height: 0; }
     .slider {
@@ -109,8 +110,8 @@
     .slider:before {
       position: absolute;
       content: "";
-      height: 12px;
-      width: 12px;
+      height: 10px;
+      width: 10px;
       left: 3px;
       bottom: 3px;
       background-color: #f4f4f6;
@@ -123,13 +124,13 @@
     .bg-swatches { 
       display: flex; 
       align-items: center; 
-      gap: 7px; 
+      gap: 6px; 
       padding-left: 8px;
       border-left: 1px solid rgba(255, 255, 255, 0.12);
     }
     .swatch {
-      width: 16px;
-      height: 16px;
+      width: 15px;
+      height: 15px;
       border-radius: 50%;
       border: 2px solid rgba(255, 255, 255, 0.25);
       cursor: pointer;
@@ -138,38 +139,38 @@
     .swatch:hover { transform: scale(1.15); }
     .swatch.active { border-color: #ffffff; transform: scale(1.15); }
 
-    /* HUD CONTAINER */
+    /* HUD CONTAINER (Dipastikan Utuh & Tidak Kepotong) */
     .hud-container {
       position: fixed;
-      bottom: 24px;
+      bottom: 18px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(20, 20, 26, 0.76);
+      background: rgba(20, 20, 26, 0.8);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 24px;
-      padding: 18px 24px;
+      border-radius: 22px;
+      padding: 14px 20px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       width: 92%;
-      max-width: 390px;
-      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5);
-      z-index: 20;
+      max-width: 370px;
+      box-shadow: 0 20px 44px rgba(0, 0, 0, 0.55);
+      z-index: 30;
       transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     /* COMPACT DOCK MODE SAAT TIMER BERJALAN */
     body.focus-active .hud-container {
-      bottom: 16px;
-      max-width: 540px;
-      padding: 10px 20px;
+      bottom: 14px;
+      max-width: 520px;
+      padding: 9px 18px;
       border-radius: 999px;
       flex-direction: row;
       justify-content: space-between;
-      gap: 14px;
+      gap: 12px;
     }
 
     body.focus-active .mode-tabs,
@@ -188,21 +189,21 @@
     }
 
     body.focus-active .timer-display {
-      font-size: 28px;
+      font-size: 26px;
       letter-spacing: 1px;
     }
 
     body.focus-active .timer-controls { gap: 6px; }
-    body.focus-active .btn-timer { padding: 6px 14px; font-size: 12px; }
+    body.focus-active .btn-timer { padding: 6px 12px; font-size: 11px; }
 
     body.focus-active .spotify-player {
       width: auto;
       padding-top: 0;
       border-top: none;
-      padding-left: 12px;
+      padding-left: 10px;
       border-left: 1px solid rgba(255, 255, 255, 0.12);
     }
-    body.focus-active .spotify-play-btn { width: 34px; height: 34px; }
+    body.focus-active .spotify-play-btn { width: 32px; height: 32px; }
 
     /* Mode & Custom Lap Settings */
     .mode-tabs { display: flex; gap: 6px; align-items: center; }
@@ -210,9 +211,9 @@
       background: transparent;
       border: 1px solid rgba(255,255,255,0.15);
       color: #a1a1aa;
-      padding: 5px 12px;
+      padding: 4px 10px;
       border-radius: 999px;
-      font-size: 12px;
+      font-size: 11px;
       cursor: pointer;
       transition: all 0.2s;
     }
@@ -222,13 +223,13 @@
     .custom-settings-grid {
       display: none;
       grid-template-columns: repeat(3, 1fr) auto;
-      gap: 8px;
+      gap: 6px;
       align-items: end;
       width: 100%;
       background: rgba(255, 255, 255, 0.04);
       border: 1px solid rgba(255, 255, 255, 0.08);
-      padding: 10px 12px;
-      border-radius: 14px;
+      padding: 8px 10px;
+      border-radius: 12px;
     }
     .custom-settings-grid.show { display: grid; }
 
@@ -236,10 +237,10 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 4px;
+      gap: 3px;
     }
     .input-group label {
-      font-size: 10px;
+      font-size: 9px;
       color: #a1a1aa;
       text-transform: uppercase;
       letter-spacing: 0.5px;
@@ -249,10 +250,10 @@
       background: rgba(255, 255, 255, 0.08);
       border: 1px solid rgba(255, 255, 255, 0.16);
       color: #fff;
-      padding: 6px 4px;
-      border-radius: 8px;
+      padding: 4px;
+      border-radius: 6px;
       text-align: center;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 600;
       outline: none;
     }
@@ -262,15 +263,15 @@
     .session-status {
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: 11px;
+      gap: 7px;
+      font-size: 10px;
       font-weight: 600;
-      letter-spacing: 0.8px;
+      letter-spacing: 0.6px;
       color: #a1a1aa;
       text-transform: uppercase;
     }
     .phase-pill {
-      padding: 2px 8px;
+      padding: 2px 7px;
       border-radius: 999px;
       background: rgba(255, 255, 255, 0.1);
       color: #f4f4f6;
@@ -280,16 +281,16 @@
       color: #38bdf8;
     }
     .forest-badge {
-      padding: 2px 8px;
+      padding: 2px 7px;
       border-radius: 999px;
       background: rgba(30, 215, 96, 0.14);
       color: #1ed760;
-      font-size: 11px;
+      font-size: 10px;
     }
-    .lap-dots { display: flex; gap: 5px; }
+    .lap-dots { display: flex; gap: 4px; }
     .lap-dot {
-      width: 7px;
-      height: 7px;
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
       background: rgba(255, 255, 255, 0.18);
       transition: all 0.3s;
@@ -298,7 +299,7 @@
     .lap-dot.current { background: #f4f4f6; transform: scale(1.25); }
 
     .timer-display {
-      font-size: 50px;
+      font-size: 42px;
       font-weight: 700;
       letter-spacing: 2px;
       font-variant-numeric: tabular-nums;
@@ -311,10 +312,10 @@
       background: rgba(255, 255, 255, 0.12);
       color: #f4f4f6;
       border: 1px solid rgba(255, 255, 255, 0.1);
-      padding: 8px 18px;
+      padding: 6px 16px;
       border-radius: 999px;
       font-weight: 600;
-      font-size: 13px;
+      font-size: 12px;
       cursor: pointer;
       transition: all 0.15s;
     }
@@ -324,18 +325,18 @@
     /* Spotify-Style Audio Player */
     .spotify-player {
       width: 100%;
-      padding-top: 10px;
+      padding-top: 8px;
       border-top: 1px solid rgba(255, 255, 255, 0.1);
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
     }
 
     .track-info {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 12px;
+      font-size: 11px;
     }
     .track-title {
       color: #e4e4e7;
@@ -343,11 +344,11 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 240px;
+      max-width: 230px;
     }
     .track-badge {
-      font-size: 10px;
-      padding: 2px 8px;
+      font-size: 9px;
+      padding: 2px 7px;
       border-radius: 999px;
       background: rgba(29, 185, 84, 0.18);
       color: #1ed760;
@@ -358,7 +359,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 10px;
     }
 
     .transport-btns {
@@ -381,8 +382,8 @@
     .icon-btn.active { color: #1ed760; }
 
     .spotify-play-btn {
-      width: 38px;
-      height: 38px;
+      width: 34px;
+      height: 34px;
       border-radius: 50%;
       background: #ffffff;
       color: #121216;
@@ -401,7 +402,7 @@
       align-items: center;
       gap: 6px;
       flex: 1;
-      max-width: 120px;
+      max-width: 110px;
     }
     input[type="range"] {
       width: 100%;
@@ -428,10 +429,18 @@
       </span>
     </label>
 
-    <label class="toggle-wrap" title="Objek membesar dari kecil (35%) hingga penuh (100%) selama sesi Focus">
+    <label class="toggle-wrap" title="Objek membesar dari kecil hingga penuh selama sesi Focus">
       <span>Grow</span>
       <span class="switch">
         <input type="checkbox" id="growToggle" checked onchange="syncModelState()" />
+        <span class="slider"></span>
+      </span>
+    </label>
+
+    <label class="toggle-wrap" title="Tampilkan kloningan objek di kiri-kanan setiap selesai 1 lap">
+      <span>Clone</span>
+      <span class="switch">
+        <input type="checkbox" id="cloneToggle" checked onchange="renderGrownClones()" />
         <span class="slider"></span>
       </span>
     </label>
@@ -479,7 +488,7 @@
         <label for="lapsInput">Laps</label>
         <input type="number" id="lapsInput" class="custom-input" min="1" max="12" value="4" />
       </div>
-      <button class="mode-btn active" style="height: 30px;" onclick="applyCustomSettings()">Set</button>
+      <button class="mode-btn active" style="height: 26px;" onclick="applyCustomSettings()">Set</button>
     </div>
 
     <div class="session-status">
@@ -499,14 +508,14 @@
 
     <div class="spotify-player">
       <div class="track-info">
-        <span class="track-title" id="trackName">Memuat lagu...</span>
+        <span class="track-title" id="trackName">Lo-Fi Synth & Rain (Built-in)</span>
         <span class="track-badge" id="audioStatus">READY</span>
       </div>
 
       <div class="player-controls-row">
         <div class="transport-btns">
           <button class="icon-btn active" onclick="playRandomTrack()" title="Shuffle Track">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line>
               <polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line>
               <line x1="4" y1="4" x2="9" y2="9"></line>
@@ -514,17 +523,17 @@
           </button>
 
           <button class="spotify-play-btn" id="audioBtn" onclick="toggleAudio()" title="Play / Pause">
-            <svg id="playIcon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <svg id="playIcon" width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
               <polygon points="6 3 20 12 6 21 6 3"></polygon>
             </svg>
-            <svg id="pauseIcon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display: none;">
+            <svg id="pauseIcon" width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="display: none;">
               <rect x="6" y="4" width="4" height="16"></rect>
               <rect x="14" y="4" width="4" height="16"></rect>
             </svg>
           </button>
 
           <button class="icon-btn" onclick="playNextTrack()" title="Next Track">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
               <polygon points="5 4 15 12 5 20 5 4"></polygon>
               <line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2"></line>
             </svg>
@@ -532,7 +541,7 @@
         </div>
 
         <div class="volume-box">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#a1a1aa" stroke-width="2">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a1a1aa" stroke-width="2">
             <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
             <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
           </svg>
@@ -566,6 +575,7 @@
     const modelSelect = document.getElementById("modelSelect");
     const motionToggle = document.getElementById("motionToggle");
     const growToggle = document.getElementById("growToggle");
+    const cloneToggle = document.getElementById("cloneToggle");
     const timerEl = document.getElementById("timer");
     const startBtn = document.getElementById("startBtn");
     const customPanel = document.getElementById("customPanel");
@@ -584,7 +594,7 @@
     const trackNameEl = document.getElementById("trackName");
     const audioStatusEl = document.getElementById("audioStatus");
 
-    // --- 1. CAMERA FRAMING, GROWTH SCALE & CLONES ---
+    // --- 1. CAMERA FRAMING, GROWTH SCALE & ANIMATED CLONES ---
     viewerEl.addEventListener("load", () => {
       const orbit = viewerEl.getCameraOrbit();
       const target = viewerEl.getCameraTarget();
@@ -602,7 +612,7 @@
       if (isRunning) {
         viewerEl.setAttribute("camera-target", `0m ${baseTargetY}m 0m`);
       } else {
-        const offsetDown = modelHeight * 0.25;
+        const offsetDown = modelHeight * 0.28;
         viewerEl.setAttribute("camera-target", `0m ${baseTargetY - offsetDown}m 0m`);
       }
     }
@@ -620,12 +630,27 @@
         const elapsed = Math.max(0, totalFocusSec - timeLeft);
         const progress = Math.min(1, elapsed / totalFocusSec);
 
-        // Mulai dari 0.35 (35%) dan tumbuh mulus sampai 1.0 (100%)
         const minScale = 0.35;
         const s = (minScale + (1 - minScale) * progress).toFixed(4);
         viewerEl.style.transform = `scale(${s})`;
       } else {
         viewerEl.style.transform = "scale(1)";
+      }
+    }
+
+    // Sinkronkan animasi kerangka + rotasi untuk model utama MAUPUN semua kloningan
+    function applyMotionToElement(el, active) {
+      if (active) {
+        if (el.availableAnimations && el.availableAnimations.length > 0) {
+          const preferred = el.availableAnimations.find(a => /idle|walk|dance|wave|grow/i.test(a));
+          el.animationName = preferred || el.availableAnimations[0];
+          el.play();
+        }
+        el.setAttribute("auto-rotate", "");
+        el.setAttribute("rotation-per-second", currentPhase === "focus" ? "12deg" : "5deg");
+      } else {
+        if (typeof el.pause === "function") el.pause();
+        el.removeAttribute("auto-rotate");
       }
     }
 
@@ -635,25 +660,22 @@
       updateModelGrowthScale();
 
       const shouldAnimate = isRunning && motionToggle.checked;
-      if (shouldAnimate) {
-        if (viewerEl.availableAnimations && viewerEl.availableAnimations.length > 0) {
-          const preferred = viewerEl.availableAnimations.find(a => /idle|walk|dance|wave|grow/i.test(a));
-          viewerEl.animationName = preferred || viewerEl.availableAnimations[0];
-          viewerEl.play();
-        }
-        viewerEl.setAttribute("auto-rotate", "");
-        viewerEl.setAttribute("rotation-per-second", currentPhase === "focus" ? "12deg" : "5deg");
-      } else {
-        if (typeof viewerEl.pause === "function") viewerEl.pause();
-        viewerEl.removeAttribute("auto-rotate");
-      }
+      applyMotionToElement(viewerEl, shouldAnimate);
+
+      // Ikut gerakkan semua kloningan yang sudah muncul di layar
+      grownClonesEl.querySelectorAll("model-viewer").forEach(cloneEl => {
+        applyMotionToElement(cloneEl, shouldAnimate);
+      });
     }
 
     function renderGrownClones() {
       grownClonesEl.innerHTML = "";
+      if (!cloneToggle.checked || treesGrown <= 0) return;
+
       const currentSrc = viewerEl.getAttribute("src");
       const offsets = [-22, 22, -36, 36, -14, 14, -44, 44];
       const count = Math.min(treesGrown, offsets.length);
+      const shouldAnimate = isRunning && motionToggle.checked;
 
       for (let i = 0; i < count; i++) {
         const clone = document.createElement("model-viewer");
@@ -664,7 +686,7 @@
         
         const xOffset = offsets[i];
         const yOffset = (i % 2 === 0) ? -4 : -8;
-        const cloneScale = 0.58;
+        const cloneScale = 0.55;
 
         clone.style.cssText = `
           position: absolute;
@@ -673,11 +695,16 @@
           left: 0;
           top: 0;
           background: transparent;
-          opacity: 0.85;
+          opacity: 0.88;
           transform: translate(${xOffset}%, ${yOffset}%) scale(${cloneScale});
           transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
           pointer-events: none;
         `;
+
+        clone.addEventListener("load", () => {
+          applyMotionToElement(clone, isRunning && motionToggle.checked);
+        });
+
         grownClonesEl.appendChild(clone);
       }
     }
@@ -861,27 +888,25 @@
       resetSession();
     }
 
-    // --- 4. SPOTIFY-STYLE AUDIO PLAYER ---
+    // --- 4. BUILT-IN LO-FI SYNTH ENGINE + MP3 PLAYLIST ---
     const playlist = [
-      {
-        title: "Gymnopédie No. 1 - Erik Satie",
-        url: "https://upload.wikimedia.org/wikipedia/commons/3/35/Erik_Satie_-_Gymnopedie_No_1.ogg"
-      },
-      {
-        title: "Clair de Lune - Claude Debussy",
-        url: "https://upload.wikimedia.org/wikipedia/commons/b/be/Claude_Debussy_-_Clair_de_lune.ogg"
-      },
-      {
-        title: "Nocturne Op. 9 No. 2 - Chopin",
-        url: "https://upload.wikimedia.org/wikipedia/commons/e/eb/Frederic_Chopin_-_Nocturne_in_E_flat_major%2C_Op._9_no._2.ogg"
-      }
+      { title: "Midnight Rhodes & Rain (Synth)", type: "synth", chords: [[261.63, 329.63, 392.00, 493.88], [220.00, 261.63, 329.63, 392.00], [174.61, 220.00, 261.63, 329.63], [196.00, 246.94, 293.66, 349.23]] },
+      { title: "Warm Sunset Jazz Chords (Synth)", type: "synth", chords: [[293.66, 349.23, 440.00, 523.25], [196.00, 246.94, 293.66, 349.23], [261.63, 329.63, 392.00, 493.88], [220.00, 261.63, 329.63, 392.00]] }
     ];
 
     let currentTrackIndex = 0;
-    bgAudio.volume = 0.5;
+    let isAudioPlaying = false;
+    let masterVolume = 0.5;
+    let synthCtx = null;
+    let synthInterval = null;
+    let rainNode = null;
+    let masterGain = null;
 
-    function setPlayingUI(isPlaying) {
-      if (isPlaying) {
+    bgAudio.volume = masterVolume;
+
+    function setPlayingUI(playing) {
+      isAudioPlaying = playing;
+      if (playing) {
         playIcon.style.display = "none";
         pauseIcon.style.display = "block";
         audioStatusEl.textContent = "PLAYING";
@@ -892,18 +917,106 @@
       }
     }
 
+    function stopSynth() {
+      if (synthInterval) {
+        clearInterval(synthInterval);
+        synthInterval = null;
+      }
+      if (rainNode) {
+        try { rainNode.stop(); } catch (e) {}
+        rainNode = null;
+      }
+    }
+
+    function startSynth(track) {
+      stopSynth();
+      if (!synthCtx) {
+        synthCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (synthCtx.state === "suspended") synthCtx.resume();
+
+      masterGain = synthCtx.createGain();
+      masterGain.gain.value = masterVolume * 0.35;
+      masterGain.connect(synthCtx.destination);
+
+      // Suara rintik hujan lembut (Pink/Brown noise filtered)
+      const bufferSize = synthCtx.sampleRate * 2;
+      const noiseBuffer = synthCtx.createBuffer(1, bufferSize, synthCtx.sampleRate);
+      const output = noiseBuffer.getChannelData(0);
+      let lastOut = 0.0;
+      for (let i = 0; i < bufferSize; i++) {
+        const white = Math.random() * 2 - 1;
+        output[i] = (lastOut + (0.02 * white)) / 1.02;
+        lastOut = output[i];
+        output[i] *= 0.18;
+      }
+      rainNode = synthCtx.createBufferSource();
+      rainNode.buffer = noiseBuffer;
+      rainNode.loop = true;
+
+      const filter = synthCtx.createBiquadFilter();
+      filter.type = "lowpass";
+      filter.frequency.value = 850;
+      rainNode.connect(filter);
+      filter.connect(masterGain);
+      rainNode.start();
+
+      // Mainkan progresi akor elektrik piano lo-fi tiap 3.2 detik
+      let step = 0;
+      const playChord = () => {
+        if (!isAudioPlaying) return;
+        const chord = track.chords[step % track.chords.length];
+        step++;
+
+        chord.forEach((freq, idx) => {
+          const osc = synthCtx.createOscillator();
+          const noteGain = synthCtx.createGain();
+          osc.type = "triangle";
+          osc.frequency.setValueAtTime(freq, synthCtx.currentTime + idx * 0.04);
+
+          noteGain.gain.setValueAtTime(0.001, synthCtx.currentTime + idx * 0.04);
+          noteGain.gain.linearRampToValueAtTime(0.14, synthCtx.currentTime + idx * 0.04 + 0.15);
+          noteGain.gain.exponentialRampToValueAtTime(0.0008, synthCtx.currentTime + 3.0);
+
+          osc.connect(noteGain);
+          noteGain.connect(masterGain);
+          osc.start(synthCtx.currentTime + idx * 0.04);
+          osc.stop(synthCtx.currentTime + 3.1);
+        });
+      };
+
+      playChord();
+      synthInterval = setInterval(playChord, 3200);
+    }
+
+    function stopAllAudio() {
+      bgAudio.pause();
+      stopSynth();
+      setPlayingUI(false);
+    }
+
     function loadTrack(index, autoPlay = false) {
       currentTrackIndex = index;
       const track = playlist[currentTrackIndex];
-      bgAudio.src = track.url;
       trackNameEl.textContent = track.title;
-      
+
+      bgAudio.pause();
+      stopSynth();
+
       if (autoPlay) {
-        bgAudio.play().then(() => {
+        if (track.type === "synth") {
           setPlayingUI(true);
-        }).catch(() => {
-          playNextTrack();
-        });
+          startSynth(track);
+        } else {
+          bgAudio.src = track.url;
+          bgAudio.play().then(() => {
+            setPlayingUI(true);
+          }).catch(() => {
+            playNextTrack();
+          });
+        }
+      } else {
+        setPlayingUI(false);
       }
     }
 
@@ -913,7 +1026,10 @@
     }
 
     function playRandomTrack() {
-      if (playlist.length <= 1) return;
+      if (playlist.length <= 1) {
+        loadTrack(0, true);
+        return;
+      }
       let nextIndex;
       do {
         nextIndex = Math.floor(Math.random() * playlist.length);
@@ -924,20 +1040,19 @@
     bgAudio.addEventListener("ended", playRandomTrack);
 
     function toggleAudio() {
-      if (bgAudio.paused) {
-        bgAudio.play().then(() => {
-          setPlayingUI(true);
-        }).catch(() => {
-          playNextTrack();
-        });
+      if (isAudioPlaying) {
+        stopAllAudio();
       } else {
-        bgAudio.pause();
-        setPlayingUI(false);
+        loadTrack(currentTrackIndex, true);
       }
     }
 
     function changeVolume(val) {
-      bgAudio.volume = val;
+      masterVolume = parseFloat(val);
+      bgAudio.volume = masterVolume;
+      if (masterGain && synthCtx) {
+        masterGain.gain.setTargetAtTime(masterVolume * 0.35, synthCtx.currentTime, 0.05);
+      }
     }
 
     // --- 5. AUTO-FETCH FILE .GLB & .MP3 DARI GITHUB REPO ---
@@ -976,8 +1091,9 @@
           const mp3Files = files.filter(f => f.name.toLowerCase().endsWith(".mp3"));
           mp3Files.forEach(file => {
             const cleanTitle = file.name.replace(/\.mp3$/i, "").replace(/[-_]/g, " ");
-            playlist.push({
+            playlist.unshift({
               title: `${cleanTitle.replace(/\b\w/g, l => l.toUpperCase())} (My Track)`,
+              type: "mp3",
               url: file.name
             });
           });
@@ -986,8 +1102,7 @@
         console.log("Menggunakan aset default:", err);
       }
 
-      const randomStart = Math.floor(Math.random() * playlist.length);
-      loadTrack(randomStart, false);
+      loadTrack(0, false);
       syncModelState();
     }
 
