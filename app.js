@@ -10,6 +10,7 @@ let timerId = null;
 let isRunning = false;
 let isHudExpanded = false;
 let forestStageModels = [];
+let fullModelRadius = null;
 
 // --- DOM REFERENCES ---
 const topBarEl = document.getElementById("topBar");
@@ -74,29 +75,42 @@ function updateHudLayout() {
   updateModelGrowthScale();
 }
 
-// --- 2. GROWTH SCALE, MOTION & CLONES ---
+// --- 2. GROWTH SCALE (BEBAS CLIPPING), MOTION & CLONES ---
 function getFocusProgress() {
   const totalFocusSec = focusMinutes * 60;
   const elapsed = Math.max(0, totalFocusSec - timeLeft);
   return Math.min(1, elapsed / totalFocusSec);
 }
 
+// Efek Grow memakai jarak kamera (camera-orbit radius) agar kanvas WebGL tetap 100% layar penuh dan bebas clipping
 function updateModelGrowthScale() {
   const shouldCompact = isRunning && !isHudExpanded;
   const translateY = shouldCompact ? "0%" : "-10%";
 
+  // Kanvas selalu scale(1) supaya tepi kotak WebGL tidak pernah memotong model saat zoom
+  mainScaleWrapperEl.style.transform = `translateY(${translateY}) scale(1)`;
+
+  if (!fullModelRadius) return;
+
+  const currentOrbit = viewerEl.getCameraOrbit();
+  const thetaDeg = (currentOrbit.theta * 180 / Math.PI).toFixed(2);
+  const phiDeg = (currentOrbit.phi * 180 / Math.PI).toFixed(2);
+
   if (!growToggle.checked) {
-    mainScaleWrapperEl.style.transform = `translateY(${translateY}) scale(1)`;
+    viewerEl.cameraOrbit = `${thetaDeg}deg ${phiDeg}deg ${(fullModelRadius * 1.15).toFixed(3)}m`;
     return;
   }
 
   if (currentPhase === "focus") {
-    const progress = getFocusProgress();
-    const minScale = 0.35;
-    const s = (minScale + (1 - minScale) * progress).toFixed(4);
-    mainScaleWrapperEl.style.transform = `translateY(${translateY}) scale(${s})`;
+    const progress = getFocusProgress(); // 0.0 -> 1.0
+    // Mulai dari kamera jauh (2.9x radius -> objek tampak kecil), perlahan mendekat (1.15x radius -> objek besar penuh)
+    const startMult = 2.9;
+    const endMult = 1.15;
+    const currentMult = startMult - (startMult - endMult) * progress;
+
+    viewerEl.cameraOrbit = `${thetaDeg}deg ${phiDeg}deg ${(fullModelRadius * currentMult).toFixed(3)}m`;
   } else {
-    mainScaleWrapperEl.style.transform = `translateY(${translateY}) scale(1)`;
+    viewerEl.cameraOrbit = `${thetaDeg}deg ${phiDeg}deg ${(fullModelRadius * 1.15).toFixed(3)}m`;
   }
 }
 
@@ -110,7 +124,7 @@ function updateCloneScales() {
     const ty = clone.dataset.ty;
 
     if (!isCloneGrowOn) {
-      // Clone Grow MATI -> semua kloningan mengecil jadi miniatur (0.26)
+      // Clone Grow MATI -> semua kloningan mengecil jadi miniatur
       clone.style.transform = `translate(${tx}%, ${ty}%) scale(0.26)`;
       clone.style.opacity = "0.75";
     } else {
@@ -186,13 +200,21 @@ function renderGrownClones() {
   requestAnimationFrame(() => updateCloneScales());
 }
 
-viewerEl.addEventListener("load", syncModelState);
+viewerEl.addEventListener("load", () => {
+  // Kalibrasi jarak radius kamera ideal pada ukuran penuh 100%
+  if (!fullModelRadius) {
+    const orbit = viewerEl.getCameraOrbit();
+    fullModelRadius = orbit.radius;
+  }
+  syncModelState();
+});
 
 function updateForestStageModel() {
   if (forestStageModels.length > 0) {
     const stageIdx = Math.min(treesGrown, forestStageModels.length - 1);
     const targetFile = forestStageModels[stageIdx];
     if (viewerEl.getAttribute("src") !== targetFile) {
+      fullModelRadius = null;
       viewerEl.src = targetFile;
       modelSelect.value = targetFile;
     }
@@ -201,6 +223,7 @@ function updateForestStageModel() {
 }
 
 function changeModel(modelUrl) {
+  fullModelRadius = null;
   viewerEl.src = modelUrl;
   renderGrownClones();
 }
