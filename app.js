@@ -8,14 +8,13 @@ let currentPhase = "focus";
 let timeLeft = focusMinutes * 60;
 let timerId = null;
 let isRunning = false;
-let isHudExpanded = false; // Manual override untuk memperbesar/memperkecil HUD saat timer jalan
+let isHudExpanded = false;
 let forestStageModels = [];
 
 // --- DOM REFERENCES ---
 const topBarEl = document.getElementById("topBar");
 const forestStageEl = document.getElementById("forestStage");
 const grownClonesEl = document.getElementById("grownClones");
-const mainStageBoxEl = document.getElementById("mainStageBox");
 const mainScaleWrapperEl = document.getElementById("mainScaleWrapper");
 const viewerEl = document.getElementById("viewer");
 const modelSelect = document.getElementById("modelSelect");
@@ -84,8 +83,7 @@ function getFocusProgress() {
 
 function updateModelGrowthScale() {
   const shouldCompact = isRunning && !isHudExpanded;
-  // Geser sedikit ke atas (-8%) hanya saat HUD penuh terbuka, dan kembali ke tengah (0%) saat compact
-  const translateY = shouldCompact ? "0%" : "-8%";
+  const translateY = shouldCompact ? "0%" : "-10%";
 
   if (!growToggle.checked) {
     mainScaleWrapperEl.style.transform = `translateY(${translateY}) scale(1)`;
@@ -102,34 +100,21 @@ function updateModelGrowthScale() {
   }
 }
 
-  if (currentPhase === "focus") {
-    const progress = getFocusProgress();
-    const minScale = 0.35;
-    const s = (minScale + (1 - minScale) * progress).toFixed(4);
-    mainScaleWrapperEl.style.transform = `scale(${s})`;
-  } else {
-    mainScaleWrapperEl.style.transform = "scale(1)";
-  }
-}
-
-// Update skala semua kloningan berdasarkan toggle Clone Grow:
-// - Mati: semua kloningan tetap kecil (scale 0.28)
-// - Nyala: kloningan yang sudah selesai tumbuh ke ukuran dewasa (0.56), dan jika sedang focus ikut membesar bertahap
 function updateCloneScales() {
   const clones = grownClonesEl.querySelectorAll("model-viewer");
   const isCloneGrowOn = cloneGrowToggle.checked;
   const progress = currentPhase === "focus" ? getFocusProgress() : 1;
 
-  clones.forEach((clone, idx) => {
+  clones.forEach((clone) => {
     const tx = clone.dataset.tx;
     const ty = clone.dataset.ty;
 
     if (!isCloneGrowOn) {
-      // Clone Grow MATI -> tetap kecil (miniatur)
-      clone.style.transform = `translate(${tx}%, ${ty}%) scale(0.28)`;
-      clone.style.opacity = "0.78";
+      // Clone Grow MATI -> semua kloningan mengecil jadi miniatur (0.26)
+      clone.style.transform = `translate(${tx}%, ${ty}%) scale(0.26)`;
+      clone.style.opacity = "0.75";
     } else {
-      // Clone Grow NYALA -> tumbuh bertahap (0.28 -> 0.56)
+      // Clone Grow NYALA -> tumbuh bertahap (0.34 -> 0.56)
       const dynamicScale = (0.34 + 0.22 * progress).toFixed(3);
       clone.style.transform = `translate(${tx}%, ${ty}%) scale(${dynamicScale})`;
       clone.style.opacity = "0.92";
@@ -188,7 +173,6 @@ function renderGrownClones() {
     clone.dataset.tx = xOffset;
     clone.dataset.ty = yOffset;
 
-    // Mulai dari skala kecil terlebih dahulu lalu transisi ke skala target
     clone.style.transform = `translate(${xOffset}%, ${yOffset}%) scale(0.15)`;
     clone.style.opacity = "0";
 
@@ -331,7 +315,7 @@ function toggleTimer() {
     isHudExpanded = false;
   } else {
     isRunning = true;
-    isHudExpanded = false; // Otomatis ciutkan saat mulai fokus, bisa dibuka lewat tombol expand
+    isHudExpanded = false;
     startBtn.textContent = "Pause";
     customPanel.classList.add("hidden");
     customPanel.classList.remove("grid");
