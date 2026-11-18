@@ -32,7 +32,7 @@
       top: 20px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(24, 24, 30, 0.65);
+      background: rgba(24, 24, 30, 0.68);
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
       border: 1px solid rgba(255, 255, 255, 0.12);
@@ -42,20 +42,14 @@
       align-items: center;
       gap: 12px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
-      z-index: 10;
+      z-index: 20;
       max-width: 95vw;
       flex-wrap: wrap;
       justify-content: center;
-      transition: opacity 0.4s ease, transform 0.4s ease;
+      transition: opacity 0.4s ease;
     }
-
-    /* Redupkan sedikit Top Bar saat mode fokus aktif agar makin imersif */
-    body.focus-active .top-bar {
-      opacity: 0.45;
-    }
-    body.focus-active .top-bar:hover {
-      opacity: 1;
-    }
+    body.focus-active .top-bar { opacity: 0.5; }
+    body.focus-active .top-bar:hover { opacity: 1; }
 
     .scene-select {
       background: rgba(255, 255, 255, 0.08);
@@ -127,13 +121,13 @@
     .swatch:hover { transform: scale(1.15); }
     .swatch.active { border-color: #ffffff; transform: scale(1.15); }
 
-    /* Panel UI Glassmorphism Bawah (Default Standby State) */
+    /* SATU-SATUNYA HUD CONTAINER */
     .hud-container {
       position: fixed;
       bottom: 24px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(20, 20, 26, 0.72);
+      background: rgba(20, 20, 26, 0.76);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border: 1px solid rgba(255, 255, 255, 0.12);
@@ -146,11 +140,11 @@
       width: 92%;
       max-width: 390px;
       box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5);
-      z-index: 10;
-      transition: all 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+      z-index: 20;
+      transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
-    /* COMPACT DOCK MODE SAAT TIMER START (HUD turun & menyusut jadi bar ramping) */
+    /* COMPACT DOCK MODE SAAT TIMER BERJALAN */
     body.focus-active .hud-container {
       bottom: 16px;
       max-width: 540px;
@@ -159,10 +153,8 @@
       flex-direction: row;
       justify-content: space-between;
       gap: 14px;
-      background: rgba(18, 18, 24, 0.78);
     }
 
-    /* Sembunyikan elemen setup saat mode fokus aktif */
     body.focus-active .mode-tabs,
     body.focus-active .custom-settings-grid,
     body.focus-active .track-info,
@@ -183,13 +175,8 @@
       letter-spacing: 1px;
     }
 
-    body.focus-active .timer-controls {
-      gap: 6px;
-    }
-    body.focus-active .btn-timer {
-      padding: 6px 14px;
-      font-size: 12px;
-    }
+    body.focus-active .timer-controls { gap: 6px; }
+    body.focus-active .btn-timer { padding: 6px 14px; font-size: 12px; }
 
     body.focus-active .spotify-player {
       width: auto;
@@ -198,10 +185,7 @@
       padding-left: 12px;
       border-left: 1px solid rgba(255, 255, 255, 0.12);
     }
-    body.focus-active .spotify-play-btn {
-      width: 34px;
-      height: 34px;
-    }
+    body.focus-active .spotify-play-btn { width: 34px; height: 34px; }
 
     /* Mode & Custom Lap Settings */
     .mode-tabs { display: flex; gap: 6px; align-items: center; }
@@ -303,7 +287,6 @@
       font-variant-numeric: tabular-nums;
       line-height: 1;
       cursor: pointer;
-      transition: font-size 0.3s ease;
     }
 
     .timer-controls { display: flex; gap: 8px; }
@@ -428,7 +411,7 @@
       </span>
     </label>
 
-    <label class="toggle-wrap" title="Objek membesar dari kecil hingga penuh selama sesi Focus">
+    <label class="toggle-wrap" title="Objek membesar dari kecil (30%) hingga penuh (100%) selama sesi Focus">
       <span>Grow</span>
       <span class="switch">
         <input type="checkbox" id="growToggle" checked onchange="syncModelState()" />
@@ -551,6 +534,7 @@
     let timerId = null;
     let isRunning = false;
     let forestStageModels = [];
+
     let baseRadius = null;
     let baseTargetY = 0;
     let modelHeight = 1;
@@ -577,9 +561,10 @@
     const trackNameEl = document.getElementById("trackName");
     const audioStatusEl = document.getElementById("audioStatus");
 
-    // --- 1. CAMERA FRAMING & POSITIONING ---
+    // --- 1. CAMERA FRAMING & GROWTH SCALE ---
     viewerEl.addEventListener("load", () => {
-      viewerEl.setAttribute("scale", "1 1 1");
+      // Ukur dimensi & jarak ideal kamera pada ukuran penuh 100%
+      viewerEl.scale = "1 1 1";
       viewerEl.updateFraming();
       
       const orbit = viewerEl.getCameraOrbit();
@@ -590,33 +575,28 @@
       baseTargetY = target.y;
       modelHeight = dims.y || 1;
 
-      // Kunci jarak kamera agar tidak zoom-in berlebihan saat objek dikecilkan
-      viewerEl.setAttribute("camera-orbit", `auto auto ${baseRadius * 1.15}m`);
+      viewerEl.setAttribute("camera-orbit", `auto auto ${baseRadius * 1.2}m`);
       viewerEl.setAttribute("min-camera-orbit", `auto auto ${baseRadius * 0.6}m`);
       viewerEl.setAttribute("max-camera-orbit", `auto auto ${baseRadius * 2.5}m`);
 
-      updateCameraPosition();
       syncModelState();
     });
 
-    // Atur posisi vertikal objek:
-    // - Saat standby: objek naik sedikit di atas kotak HUD supaya tidak ketutupan
-    // - Saat Start (compact HUD): objek turun santai ke tengah layar
     function updateCameraPosition() {
       if (!baseRadius) return;
       if (isRunning) {
-        // Mode fokus aktif (HUD compact di bawah) -> objek turun ke tengah
+        // Saat timer start (HUD menyusut ke bawah) -> objek turun ke pusat layar
         viewerEl.setAttribute("camera-target", `0m ${baseTargetY}m 0m`);
       } else {
-        // Mode standby (HUD besar di bawah) -> geser titik fokus kamera ke bawah agar objek naik ke atas HUD
-        const offsetDown = modelHeight * 0.22;
+        // Saat standby (HUD penuh) -> objek naik ke atas kotak HUD
+        const offsetDown = modelHeight * 0.25;
         viewerEl.setAttribute("camera-target", `0m ${baseTargetY - offsetDown}m 0m`);
       }
     }
 
     function updateModelGrowthScale() {
       if (!growToggle.checked) {
-        viewerEl.setAttribute("scale", "1 1 1");
+        viewerEl.scale = "1 1 1";
         return;
       }
 
@@ -625,16 +605,16 @@
         const elapsed = Math.max(0, totalFocusSec - timeLeft);
         const progress = Math.min(1, elapsed / totalFocusSec);
 
-        const minScale = 0.35;
-        const currentScale = (minScale + (1 - minScale) * progress).toFixed(4);
-        viewerEl.setAttribute("scale", `${currentScale} ${currentScale} ${currentScale}`);
+        // Mulai dari 30% (bibit) dan tumbuh sampai 100% (dewasa)
+        const minScale = 0.30;
+        const s = (minScale + (1 - minScale) * progress).toFixed(4);
+        viewerEl.scale = `${s} ${s} ${s}`;
       } else {
-        viewerEl.setAttribute("scale", "1 1 1");
+        viewerEl.scale = "1 1 1";
       }
     }
 
     function syncModelState() {
-      // Toggle class focus-active pada body untuk menyusutkan HUD ke bawah
       document.body.classList.toggle("focus-active", isRunning);
       updateCameraPosition();
       updateModelGrowthScale();
@@ -666,6 +646,7 @@
     }
 
     function changeModel(modelUrl) {
+      baseRadius = null; // Reset kalibrasi kamera untuk model baru
       viewerEl.src = modelUrl;
     }
 
