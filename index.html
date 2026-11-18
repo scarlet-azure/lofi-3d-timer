@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Lo-Fi 3D Focus Timer</title>
-  <!-- Load Google Model Viewer -->
   <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -15,80 +14,245 @@
       width: 100%;
       height: 100%;
       background: radial-gradient(circle at center, #252432 0%, #111115 100%);
+      transition: background 0.6s ease;
       --poster-color: transparent;
     }
 
-    /* Panel UI Glassmorphism */
-    .hud-container {
+    /* Top Bar untuk Setting Scene & Warna */
+    .top-bar {
       position: fixed;
-      bottom: 32px;
+      top: 24px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(24, 24, 30, 0.65);
+      background: rgba(24, 24, 30, 0.6);
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
       border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 20px;
+      border-radius: 999px;
+      padding: 8px 18px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+      z-index: 10;
+    }
+
+    .scene-select {
+      background: rgba(255, 255, 255, 0.08);
+      color: #f4f4f6;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 999px;
+      padding: 5px 12px;
+      font-size: 12px;
+      outline: none;
+      cursor: pointer;
+    }
+    .scene-select option { background: #18181e; color: #f4f4f6; }
+
+    .bg-swatches { display: flex; align-items: center; gap: 8px; }
+    .swatch {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.25);
+      cursor: pointer;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .swatch:hover { transform: scale(1.15); }
+    .swatch.active { border-color: #ffffff; transform: scale(1.15); }
+
+    /* Panel UI Glassmorphism Bawah */
+    .hud-container {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(20, 20, 26, 0.72);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 24px;
       padding: 20px 28px;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 14px;
-      min-width: 320px;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+      width: 90%;
+      max-width: 380px;
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5);
+      z-index: 10;
     }
 
-    .mode-tabs { display: flex; gap: 8px; }
+    /* Mode & Custom Timer */
+    .mode-tabs { display: flex; gap: 6px; align-items: center; }
     .mode-btn {
       background: transparent;
       border: 1px solid rgba(255,255,255,0.15);
       color: #a1a1aa;
-      padding: 6px 14px;
+      padding: 5px 12px;
       border-radius: 999px;
-      font-size: 13px;
+      font-size: 12px;
       cursor: pointer;
       transition: all 0.2s;
     }
     .mode-btn.active { background: #f4f4f6; color: #121216; border-color: #f4f4f6; font-weight: 600; }
 
+    .custom-time-box {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      margin-top: 2px;
+    }
+    .custom-time-box.show { display: flex; }
+    .custom-input {
+      width: 64px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 13px;
+      outline: none;
+    }
+
     .timer-display {
-      font-size: 52px;
+      font-size: 54px;
       font-weight: 700;
       letter-spacing: 2px;
       font-variant-numeric: tabular-nums;
-    }
-
-    .controls { display: flex; gap: 10px; align-items: center; }
-    .btn {
-      background: #e4e4e7;
-      color: #121216;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 12px;
-      font-weight: 600;
-      font-size: 14px;
+      line-height: 1;
       cursor: pointer;
-      transition: transform 0.1s, opacity 0.2s;
     }
-    .btn:active { transform: scale(0.97); }
-    .btn-secondary { background: rgba(255, 255, 255, 0.1); color: #f4f4f6; }
+    .timer-display:hover { opacity: 0.9; }
 
-    .audio-bar {
+    .timer-controls { display: flex; gap: 10px; }
+    .btn-timer {
+      background: rgba(255, 255, 255, 0.12);
+      color: #f4f4f6;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 8px 20px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-timer:hover { background: rgba(255, 255, 255, 0.2); }
+    .btn-timer.primary { background: #f4f4f6; color: #121216; }
+
+    /* Spotify-Style Audio Player */
+    .spotify-player {
+      width: 100%;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .track-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+    }
+    .track-title {
+      color: #e4e4e7;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 240px;
+    }
+    .track-badge {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(29, 185, 84, 0.18);
+      color: #1ed760;
+      font-weight: 600;
+    }
+
+    .player-controls-row {
       display: flex;
       align-items: center;
-      gap: 10px;
-      width: 100%;
-      padding-top: 8px;
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
-      font-size: 13px;
-      color: #a1a1aa;
+      justify-content: space-between;
+      gap: 12px;
     }
-    input[type="range"] { flex: 1; accent-color: #f4f4f6; cursor: pointer; }
+
+    .transport-btns {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .icon-btn {
+      background: transparent;
+      border: none;
+      color: #b3b3b3;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.15s, transform 0.1s;
+    }
+    .icon-btn:hover { color: #ffffff; transform: scale(1.06); }
+    .icon-btn.active { color: #1ed760; }
+
+    /* Tombol Play Bulat Ala Spotify */
+    .spotify-play-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #ffffff;
+      color: #121216;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      transition: transform 0.15s, background 0.15s;
+    }
+    .spotify-play-btn:hover { transform: scale(1.07); background: #f0f0f0; }
+    .spotify-play-btn:active { transform: scale(0.96); }
+
+    .volume-box {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+      max-width: 120px;
+    }
+    input[type="range"] {
+      width: 100%;
+      height: 4px;
+      accent-color: #1ed760;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
 
-  <!-- Ganti 'ruangan.glb' dengan file 3D kamu nanti -->
+  <!-- Top Bar: Pilih Model 3D & Ganti Warna BG -->
+  <div class="top-bar">
+    <select id="modelSelect" class="scene-select" onchange="changeModel(this.value)" title="Pilih Model 3D">
+      <option value="https://modelviewer.dev/shared-assets/models/Astronaut.glb">3D: Astronaut</option>
+      <option value="https://modelviewer.dev/shared-assets/models/RobotExpressive.glb">3D: Lo-Fi Robot</option>
+      <option value="https://modelviewer.dev/shared-assets/models/NeilArmstrong.glb">3D: Space Suit</option>
+      <option value="ruangan.glb">3D: My Custom Room (.glb)</option>
+    </select>
+
+    <div class="bg-swatches" title="Ganti Warna Background">
+      <div class="swatch active" style="background: #252432;" onclick="changeBg('radial-gradient(circle at center, #252432 0%, #111115 100%)', this)" title="Midnight"></div>
+      <div class="swatch" style="background: #3d2622;" onclick="changeBg('radial-gradient(circle at center, #4a2c26 0%, #170f0e 100%)', this)" title="Warm Sunset"></div>
+      <div class="swatch" style="background: #1d332d;" onclick="changeBg('radial-gradient(circle at center, #223d35 0%, #0d1714 100%)', this)" title="Matcha Forest"></div>
+      <div class="swatch" style="background: #1e2d42;" onclick="changeBg('radial-gradient(circle at center, #253954 0%, #0d131c 100%)', this)" title="Deep Ocean"></div>
+    </div>
+  </div>
+
+  <!-- Kanvas 3D -->
   <model-viewer 
     id="viewer"
     src="https://modelviewer.dev/shared-assets/models/Astronaut.glb" 
@@ -100,25 +264,75 @@
     exposure="0.9">
   </model-viewer>
 
+  <!-- HUD Bawah -->
   <div class="hud-container">
     <div class="mode-tabs">
       <button class="mode-btn active" onclick="setMode(25, this)">Focus (25m)</button>
       <button class="mode-btn" onclick="setMode(5, this)">Break (5m)</button>
+      <button class="mode-btn" id="customModeBtn" onclick="toggleCustomInput(this)">Custom</button>
     </div>
 
-    <div class="timer-display" id="timer">25:00</div>
-
-    <div class="controls">
-      <button class="btn" id="startBtn" onclick="toggleTimer()">Start</button>
-      <button class="btn btn-secondary" onclick="resetTimer()">Reset</button>
+    <!-- Input Custom Waktu -->
+    <div class="custom-time-box" id="customBox">
+      <input type="number" id="customMinutesInput" class="custom-input" min="1" max="180" value="45" placeholder="Menit" />
+      <button class="mode-btn active" onclick="applyCustomTime()">Set</button>
     </div>
 
-    <div class="audio-bar">
-      <button class="btn btn-secondary" style="padding: 6px 12px;" id="audioBtn" onclick="toggleAudio()">Play</button>
-      <button class="btn btn-secondary" style="padding: 6px 12px;" onclick="playRandomTrack()" title="Acak Lagu">Shuffle</button>
-      <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="0.5" oninput="changeVolume(this.value)" />
+    <div class="timer-display" id="timer" onclick="toggleCustomInput(document.getElementById('customModeBtn'))" title="Klik untuk atur waktu sendiri">25:00</div>
+
+    <div class="timer-controls">
+      <button class="btn-timer primary" id="startBtn" onclick="toggleTimer()">Start Focus</button>
+      <button class="btn-timer" onclick="resetTimer()">Reset</button>
     </div>
-    <div id="trackName" style="font-size: 11px; color: #71717a;">Track: Ready</div>
+
+    <!-- Spotify-Style Audio HUD -->
+    <div class="spotify-player">
+      <div class="track-info">
+        <span class="track-title" id="trackName">Memuat lagu...</span>
+        <span class="track-badge" id="audioStatus">READY</span>
+      </div>
+
+      <div class="player-controls-row">
+        <div class="transport-btns">
+          <!-- Shuffle Icon -->
+          <button class="icon-btn active" onclick="playRandomTrack()" title="Shuffle Track">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line>
+              <polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line>
+              <line x1="4" y1="4" x2="9" y2="9"></line>
+            </svg>
+          </button>
+
+          <!-- Spotify Play/Pause Circle Button -->
+          <button class="spotify-play-btn" id="audioBtn" onclick="toggleAudio()" title="Play / Pause">
+            <svg id="playIcon" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="6 3 20 12 6 21 6 3"></polygon>
+            </svg>
+            <svg id="pauseIcon" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="display: none;">
+              <rect x="6" y="4" width="4" height="16"></rect>
+              <rect x="14" y="4" width="4" height="16"></rect>
+            </svg>
+          </button>
+
+          <!-- Next Track Icon -->
+          <button class="icon-btn" onclick="playNextTrack()" title="Next Track">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="5 4 15 12 5 20 5 4"></polygon>
+              <line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2"></line>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Volume Control -->
+        <div class="volume-box">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#a1a1aa" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          </svg>
+          <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="0.5" oninput="changeVolume(this.value)" />
+        </div>
+      </div>
+    </div>
   </div>
 
   <audio id="bgAudio"></audio>
@@ -129,24 +343,41 @@
     let timerId = null;
     let isRunning = false;
 
+    const viewerEl = document.getElementById("viewer");
     const timerEl = document.getElementById("timer");
     const startBtn = document.getElementById("startBtn");
-    const bgAudio = document.getElementById("bgAudio");
-    const audioBtn = document.getElementById("audioBtn");
-    const trackNameEl = document.getElementById("trackName");
+    const customBox = document.getElementById("customBox");
+    const customMinutesInput = document.getElementById("customMinutesInput");
 
-    // --- TIMER LOGIC ---
+    const bgAudio = document.getElementById("bgAudio");
+    const playIcon = document.getElementById("playIcon");
+    const pauseIcon = document.getElementById("pauseIcon");
+    const trackNameEl = document.getElementById("trackName");
+    const audioStatusEl = document.getElementById("audioStatus");
+
+    // --- 1. SCENE & BACKGROUND CONTROLS ---
+    function changeModel(modelUrl) {
+      viewerEl.src = modelUrl;
+    }
+
+    function changeBg(gradientCss, swatchEl) {
+      viewerEl.style.background = gradientCss;
+      document.querySelectorAll(".swatch").forEach(s => s.classList.remove("active"));
+      swatchEl.classList.add("active");
+    }
+
+    // --- 2. TIMER & CUSTOM DURATION ---
     function updateDisplay() {
       const mins = Math.floor(timeLeft / 60).toString().padStart(2, "0");
       const secs = (timeLeft % 60).toString().padStart(2, "0");
       timerEl.textContent = `${mins}:${secs}`;
-      document.title = `${mins}:${secs} - Focus Timer`;
+      document.title = `${mins}:${secs} - Lo-Fi 3D Timer`;
     }
 
     function toggleTimer() {
       if (isRunning) {
         clearInterval(timerId);
-        startBtn.textContent = "Start";
+        startBtn.textContent = "Resume";
         isRunning = false;
       } else {
         isRunning = true;
@@ -158,7 +389,7 @@
           } else {
             clearInterval(timerId);
             isRunning = false;
-            startBtn.textContent = "Start";
+            startBtn.textContent = "Start Focus";
             alert("Sesi selesai!");
           }
         }, 1000);
@@ -168,7 +399,7 @@
     function resetTimer() {
       clearInterval(timerId);
       isRunning = false;
-      startBtn.textContent = "Start";
+      startBtn.textContent = "Start Focus";
       timeLeft = defaultMinutes * 60;
       updateDisplay();
     }
@@ -176,22 +407,49 @@
     function setMode(mins, btnEl) {
       document.querySelectorAll(".mode-btn").forEach(b => b.classList.remove("active"));
       btnEl.classList.add("active");
+      customBox.classList.remove("show");
       defaultMinutes = mins;
       resetTimer();
     }
 
-    // --- AUDIO & PLAYLIST LOGIC ---
+    function toggleCustomInput(btnEl) {
+      document.querySelectorAll(".mode-btn").forEach(b => b.classList.remove("active"));
+      btnEl.classList.add("active");
+      customBox.classList.toggle("show");
+      if (customBox.classList.contains("show")) {
+        customMinutesInput.focus();
+      }
+    }
+
+    function applyCustomTime() {
+      const val = parseInt(customMinutesInput.value, 10);
+      if (val && val > 0 && val <= 300) {
+        defaultMinutes = val;
+        customBox.classList.remove("show");
+        resetTimer();
+      }
+    }
+
+    customMinutesInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") applyCustomTime();
+    });
+
+    // --- 3. SPOTIFY-STYLE AUDIO PLAYER ---
     const playlist = [
       {
-        title: "Gymnopédie No. 1 - Erik Satie (Public)",
+        title: "Gymnopédie No. 1 - Erik Satie",
         url: "https://upload.wikimedia.org/wikipedia/commons/3/35/Erik_Satie_-_Gymnopedie_No_1.ogg"
       },
       {
-        title: "Clair de Lune - Debussy (Public)",
+        title: "Clair de Lune - Claude Debussy",
         url: "https://upload.wikimedia.org/wikipedia/commons/b/be/Claude_Debussy_-_Clair_de_lune.ogg"
       },
       {
-        title: "My Original Guitar Loop (Upload lofi-guitar.mp3)",
+        title: "Nocturne Op. 9 No. 2 - Chopin",
+        url: "https://upload.wikimedia.org/wikipedia/commons/e/eb/Frederic_Chopin_-_Nocturne_in_E_flat_major%2C_Op._9_no._2.ogg"
+      },
+      {
+        title: "My Original Guitar Loop",
         url: "lofi-guitar.mp3"
       }
     ];
@@ -199,20 +457,36 @@
     let currentTrackIndex = Math.floor(Math.random() * playlist.length);
     bgAudio.volume = 0.5;
 
+    function setPlayingUI(isPlaying) {
+      if (isPlaying) {
+        playIcon.style.display = "none";
+        pauseIcon.style.display = "block";
+        audioStatusEl.textContent = "PLAYING";
+      } else {
+        playIcon.style.display = "block";
+        pauseIcon.style.display = "none";
+        audioStatusEl.textContent = "PAUSED";
+      }
+    }
+
     function loadTrack(index, autoPlay = false) {
       currentTrackIndex = index;
       const track = playlist[currentTrackIndex];
       bgAudio.src = track.url;
-      trackNameEl.textContent = `Track: ${track.title}`;
+      trackNameEl.textContent = track.title;
       
       if (autoPlay) {
         bgAudio.play().then(() => {
-          audioBtn.textContent = "Pause";
+          setPlayingUI(true);
         }).catch(() => {
-          trackNameEl.textContent = `File belum ada / diblokir: ${track.title}`;
-          audioBtn.textContent = "Play";
+          playNextTrack();
         });
       }
+    }
+
+    function playNextTrack() {
+      const nextIndex = (currentTrackIndex + 1) % playlist.length;
+      loadTrack(nextIndex, true);
     }
 
     function playRandomTrack() {
@@ -221,7 +495,6 @@
       do {
         nextIndex = Math.floor(Math.random() * playlist.length);
       } while (nextIndex === currentTrackIndex);
-      
       loadTrack(nextIndex, true);
     }
 
@@ -230,13 +503,13 @@
     function toggleAudio() {
       if (bgAudio.paused) {
         bgAudio.play().then(() => {
-          audioBtn.textContent = "Pause";
+          setPlayingUI(true);
         }).catch(() => {
-          playRandomTrack();
+          playNextTrack();
         });
       } else {
         bgAudio.pause();
-        audioBtn.textContent = "Play";
+        setPlayingUI(false);
       }
     }
 
