@@ -444,14 +444,10 @@
       {
         title: "Nocturne Op. 9 No. 2 - Chopin",
         url: "https://upload.wikimedia.org/wikipedia/commons/e/eb/Frederic_Chopin_-_Nocturne_in_E_flat_major%2C_Op._9_no._2.ogg"
-      },
-      {
-        title: "My Original Guitar Loop",
-        url: "lofi-guitar.mp3"
       }
     ];
 
-    let currentTrackIndex = Math.floor(Math.random() * playlist.length);
+    let currentTrackIndex = 0;
     bgAudio.volume = 0.5;
 
     function setPlayingUI(isPlaying) {
@@ -514,16 +510,13 @@
       bgAudio.volume = val;
     }
 
-    loadTrack(currentTrackIndex, false);
-
-    // --- AUTO-FETCH FILE .GLB & .MP3 DARI GITHUB REPO ---
+    // --- 4. AUTO-FETCH FILE .GLB & .MP3 DARI GITHUB REPO ---
     const GITHUB_USER = "scarlet-azure";
     const GITHUB_REPO = "lofi-3d-timer";
 
-    async function loadRepoAssets() {
+    async function initApp() {
       const modelSelect = document.getElementById("modelSelect");
       
-      // Tambahkan beberapa preset bawaan sebagai cadangan
       const defaultModels = [
         { name: "Lo-Fi Robot (Preset)", url: "https://modelviewer.dev/shared-assets/models/RobotExpressive.glb" }
       ];
@@ -537,29 +530,26 @@
 
       try {
         const res = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/`);
-        if (!res.ok) return;
-        const files = await res.json();
+        if (res.ok) {
+          const files = await res.json();
 
-        // 1. Filter semua file .glb di repo & masukkan ke dropdown
-        const glbFiles = files.filter(f => f.name.toLowerCase().endsWith(".glb"));
-        glbFiles.forEach((file, index) => {
-          const opt = document.createElement("option");
-          opt.value = file.name; // Path relatif langsung di GitHub Pages
-          // Rapikan nama file (misal: "kamar-tidur.glb" -> "Kamar Tidur")
-          const cleanName = file.name.replace(/\.glb$/i, "").replace(/[-_]/g, " ");
-          opt.textContent = `3D: ${cleanName.replace(/\b\w/g, l => l.toUpperCase())}`;
-          modelSelect.appendChild(opt);
+          // Filter file .glb
+          const glbFiles = files.filter(f => f.name.toLowerCase().endsWith(".glb"));
+          glbFiles.forEach((file, index) => {
+            const opt = document.createElement("option");
+            opt.value = file.name;
+            const cleanName = file.name.replace(/\.glb$/i, "").replace(/[-_]/g, " ");
+            opt.textContent = `3D: ${cleanName.replace(/\b\w/g, l => l.toUpperCase())}`;
+            modelSelect.appendChild(opt);
 
-          // Jika ada file .glb milikmu sendiri, otomatis jadikan tampilan pertama
-          if (index === 0) {
-            modelSelect.value = file.name;
-            changeModel(file.name);
-          }
-        });
+            if (index === 0) {
+              modelSelect.value = file.name;
+              changeModel(file.name);
+            }
+          });
 
-        // 2. Bonus: Otomatis tarik juga file .mp3 milikmu ke dalam playlist!
-        const mp3Files = files.filter(f => f.name.toLowerCase().endsWith(".mp3"));
-        if (mp3Files.length > 0) {
+          // Filter file .mp3
+          const mp3Files = files.filter(f => f.name.toLowerCase().endsWith(".mp3"));
           mp3Files.forEach(file => {
             const cleanTitle = file.name.replace(/\.mp3$/i, "").replace(/[-_]/g, " ");
             playlist.push({
@@ -571,10 +561,13 @@
       } catch (err) {
         console.log("Menggunakan aset default:", err);
       }
+
+      // Pilih lagu acak setelah semua file .mp3 di repo ikut dimuat
+      const randomStart = Math.floor(Math.random() * playlist.length);
+      loadTrack(randomStart, false);
     }
 
-    // Jalankan saat halaman dibuka
-    loadRepoAssets();
+    initApp();
   </script>
 </body>
 </html>
