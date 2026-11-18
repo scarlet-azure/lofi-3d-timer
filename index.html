@@ -4,11 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Lo-Fi 3D Focus Timer</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Model Viewer -->
   <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background: #121216; color: #f4f4f6; overflow: hidden; height: 100vh; width: 100vw; }
-
     /* Hilangkan panah default input number */
     input[type=number]::-webkit-inner-spin-button, 
     input[type=number]::-webkit-outer-spin-button { 
@@ -17,539 +17,200 @@
     }
     input[type=number] { -moz-appearance: textfield; }
 
-    /* Wadah Kebun 3D */
-    #forestStage {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      background: radial-gradient(circle at center, #252432 0%, #111115 100%);
-      transition: background 0.6s ease;
-    }
-
-    #grownClones {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      z-index: 1;
-      transition: opacity 0.4s ease;
-    }
-
-    /* Kanvas 3D Utama */
     model-viewer {
-      width: 100%;
-      height: 100%;
-      background: transparent;
-      transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
-      transform-origin: center center;
       --poster-color: transparent;
     }
 
-    /* Top Bar */
-    .top-bar {
-      position: fixed;
-      top: 16px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(24, 24, 30, 0.72);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 999px;
-      padding: 6px 14px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
-      z-index: 30;
-      max-width: 96vw;
-      flex-wrap: wrap;
-      justify-content: center;
-      transition: opacity 0.4s ease;
+    /* Animasi muncul & tumbuh untuk kloningan (Clone Grow) */
+    @keyframes cloneGrowIn {
+      0% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(0.15); }
+      100% { opacity: 0.9; transform: translate(var(--tx), var(--ty)) scale(var(--ts)); }
     }
-    body.focus-active .top-bar { opacity: 0.55; }
-    body.focus-active .top-bar:hover { opacity: 1; }
-
-    .scene-select {
-      background: rgba(255, 255, 255, 0.08);
-      color: #f4f4f6;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 999px;
-      padding: 4px 10px;
-      font-size: 11px;
-      outline: none;
-      cursor: pointer;
-    }
-    .scene-select option { background: #18181e; color: #f4f4f6; }
-
-    .toggle-wrap {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 11px;
-      color: #d4d4d8;
-      cursor: pointer;
-      user-select: none;
-      padding-left: 8px;
-      border-left: 1px solid rgba(255, 255, 255, 0.12);
-    }
-    .switch {
-      position: relative;
-      display: inline-block;
-      width: 30px;
-      height: 16px;
-    }
-    .switch input { opacity: 0; width: 0; height: 0; }
-    .slider {
-      position: absolute;
-      cursor: pointer;
-      inset: 0;
-      background-color: rgba(255, 255, 255, 0.16);
-      transition: .25s;
-      border-radius: 999px;
-    }
-    .slider:before {
-      position: absolute;
-      content: "";
-      height: 10px;
-      width: 10px;
-      left: 3px;
-      bottom: 3px;
-      background-color: #f4f4f6;
-      transition: .25s;
-      border-radius: 50%;
-    }
-    input:checked + .slider { background-color: #1ed760; }
-    input:checked + .slider:before { transform: translateX(14px); background-color: #121216; }
-
-    .bg-swatches { 
-      display: flex; 
-      align-items: center; 
-      gap: 6px; 
-      padding-left: 8px;
-      border-left: 1px solid rgba(255, 255, 255, 0.12);
-    }
-    .swatch {
-      width: 15px;
-      height: 15px;
-      border-radius: 50%;
-      border: 2px solid rgba(255, 255, 255, 0.25);
-      cursor: pointer;
-      transition: transform 0.2s, border-color 0.2s;
-    }
-    .swatch:hover { transform: scale(1.15); }
-    .swatch.active { border-color: #ffffff; transform: scale(1.15); }
-
-    /* HUD CONTAINER (Dipastikan Utuh & Tidak Kepotong) */
-    .hud-container {
-      position: fixed;
-      bottom: 18px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(20, 20, 26, 0.8);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 22px;
-      padding: 14px 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      width: 92%;
-      max-width: 370px;
-      box-shadow: 0 20px 44px rgba(0, 0, 0, 0.55);
-      z-index: 30;
-      transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
-    }
-
-    /* COMPACT DOCK MODE SAAT TIMER BERJALAN */
-    body.focus-active .hud-container {
-      bottom: 14px;
-      max-width: 520px;
-      padding: 9px 18px;
-      border-radius: 999px;
-      flex-direction: row;
-      justify-content: space-between;
-      gap: 12px;
-    }
-
-    body.focus-active .mode-tabs,
-    body.focus-active .custom-settings-grid,
-    body.focus-active .track-info,
-    body.focus-active .volume-box,
-    body.focus-active .lap-dots {
-      display: none !important;
-    }
-
-    body.focus-active .session-status {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 2px;
-      font-size: 9px;
-    }
-
-    body.focus-active .timer-display {
-      font-size: 26px;
-      letter-spacing: 1px;
-    }
-
-    body.focus-active .timer-controls { gap: 6px; }
-    body.focus-active .btn-timer { padding: 6px 12px; font-size: 11px; }
-
-    body.focus-active .spotify-player {
-      width: auto;
-      padding-top: 0;
-      border-top: none;
-      padding-left: 10px;
-      border-left: 1px solid rgba(255, 255, 255, 0.12);
-    }
-    body.focus-active .spotify-play-btn { width: 32px; height: 32px; }
-
-    /* Mode & Custom Lap Settings */
-    .mode-tabs { display: flex; gap: 6px; align-items: center; }
-    .mode-btn {
-      background: transparent;
-      border: 1px solid rgba(255,255,255,0.15);
-      color: #a1a1aa;
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-size: 11px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .mode-btn:hover { border-color: rgba(255,255,255,0.35); color: #f4f4f6; }
-    .mode-btn.active { background: #f4f4f6; color: #121216; border-color: #f4f4f6; font-weight: 600; }
-
-    .custom-settings-grid {
-      display: none;
-      grid-template-columns: repeat(3, 1fr) auto;
-      gap: 6px;
-      align-items: end;
-      width: 100%;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      padding: 8px 10px;
-      border-radius: 12px;
-    }
-    .custom-settings-grid.show { display: grid; }
-
-    .input-group {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 3px;
-    }
-    .input-group label {
-      font-size: 9px;
-      color: #a1a1aa;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .custom-input {
-      width: 100%;
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.16);
-      color: #fff;
-      padding: 4px;
-      border-radius: 6px;
-      text-align: center;
-      font-size: 12px;
-      font-weight: 600;
-      outline: none;
-    }
-    .custom-input:focus { border-color: #1ed760; }
-
-    /* Status Phase, Lap & Forest Growth Indicator */
-    .session-status {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: 0.6px;
-      color: #a1a1aa;
-      text-transform: uppercase;
-    }
-    .phase-pill {
-      padding: 2px 7px;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.1);
-      color: #f4f4f6;
-    }
-    .phase-pill.break {
-      background: rgba(56, 189, 248, 0.18);
-      color: #38bdf8;
-    }
-    .forest-badge {
-      padding: 2px 7px;
-      border-radius: 999px;
-      background: rgba(30, 215, 96, 0.14);
-      color: #1ed760;
-      font-size: 10px;
-    }
-    .lap-dots { display: flex; gap: 4px; }
-    .lap-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.18);
-      transition: all 0.3s;
-    }
-    .lap-dot.done { background: #1ed760; }
-    .lap-dot.current { background: #f4f4f6; transform: scale(1.25); }
-
-    .timer-display {
-      font-size: 42px;
-      font-weight: 700;
-      letter-spacing: 2px;
-      font-variant-numeric: tabular-nums;
-      line-height: 1;
-      cursor: pointer;
-    }
-
-    .timer-controls { display: flex; gap: 8px; }
-    .btn-timer {
-      background: rgba(255, 255, 255, 0.12);
-      color: #f4f4f6;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      padding: 6px 16px;
-      border-radius: 999px;
-      font-weight: 600;
-      font-size: 12px;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    .btn-timer:hover { background: rgba(255, 255, 255, 0.2); }
-    .btn-timer.primary { background: #f4f4f6; color: #121216; }
-
-    /* Spotify-Style Audio Player */
-    .spotify-player {
-      width: 100%;
-      padding-top: 8px;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .track-info {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 11px;
-    }
-    .track-title {
-      color: #e4e4e7;
-      font-weight: 500;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 230px;
-    }
-    .track-badge {
-      font-size: 9px;
-      padding: 2px 7px;
-      border-radius: 999px;
-      background: rgba(29, 185, 84, 0.18);
-      color: #1ed760;
-      font-weight: 600;
-    }
-
-    .player-controls-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-    }
-
-    .transport-btns {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .icon-btn {
-      background: transparent;
-      border: none;
-      color: #b3b3b3;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: color 0.15s, transform 0.1s;
-    }
-    .icon-btn:hover { color: #ffffff; transform: scale(1.06); }
-    .icon-btn.active { color: #1ed760; }
-
-    .spotify-play-btn {
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      background: #ffffff;
-      color: #121216;
-      border: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-      transition: transform 0.15s, background 0.15s;
-    }
-    .spotify-play-btn:hover { transform: scale(1.07); background: #f0f0f0; }
-
-    .volume-box {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex: 1;
-      max-width: 110px;
-    }
-    input[type="range"] {
-      width: 100%;
-      height: 4px;
-      accent-color: #1ed760;
-      cursor: pointer;
+    .animate-clone-grow {
+      animation: cloneGrowIn 1.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     }
   </style>
 </head>
-<body>
+<body class="bg-[#121216] text-zinc-100 overflow-hidden h-screen w-screen select-none antialiased">
 
-  <!-- Top Bar -->
-  <div class="top-bar">
-    <select id="modelSelect" class="scene-select" onchange="changeModel(this.value)" title="Pilih Model 3D">
-      <option value="https://modelviewer.dev/shared-assets/models/RobotExpressive.glb">3D: Lo-Fi Robot</option>
-      <option value="https://modelviewer.dev/shared-assets/models/Astronaut.glb">3D: Astronaut</option>
+  <!-- Top Control Bar (Tailwind) -->
+  <header id="topBar" class="fixed top-4 left-1/2 -translate-x-1/2 z-30 flex flex-wrap items-center justify-center gap-2.5 px-4 py-2 rounded-full bg-zinc-900/75 backdrop-blur-md border border-white/10 shadow-2xl max-w-[96vw] transition-opacity duration-300">
+    <!-- Dropdown Pilih Model -->
+    <select id="modelSelect" onchange="changeModel(this.value)" class="bg-white/10 text-zinc-100 border border-white/15 rounded-full px-3 py-1 text-xs outline-none cursor-pointer hover:bg-white/15 transition">
+      <option value="https://modelviewer.dev/shared-assets/models/RobotExpressive.glb" class="bg-zinc-900">3D: Lo-Fi Robot</option>
+      <option value="https://modelviewer.dev/shared-assets/models/Astronaut.glb" class="bg-zinc-900">3D: Astronaut</option>
     </select>
 
-    <label class="toggle-wrap" title="Putar animasi & rotasi saat timer aktif">
+    <!-- Toggle: Main Motion -->
+    <label class="flex items-center gap-1.5 pl-2.5 border-l border-white/10 text-[11px] text-zinc-300 cursor-pointer" title="Gerakkan objek utama saat timer jalan">
       <span>Motion</span>
-      <span class="switch">
-        <input type="checkbox" id="motionToggle" checked onchange="syncModelState()" />
-        <span class="slider"></span>
-      </span>
+      <div class="relative inline-flex items-center">
+        <input type="checkbox" id="motionToggle" checked onchange="syncModelState()" class="sr-only peer">
+        <div class="w-7 h-4 bg-white/15 rounded-full peer peer-checked:bg-[#1ed760] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white peer-checked:after:bg-zinc-950 after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:after:translate-x-3"></div>
+      </div>
     </label>
 
-    <label class="toggle-wrap" title="Objek membesar dari kecil hingga penuh selama sesi Focus">
+    <!-- Toggle: Main Grow -->
+    <label class="flex items-center gap-1.5 pl-2.5 border-l border-white/10 text-[11px] text-zinc-300 cursor-pointer" title="Objek utama membesar dari kecil ke penuh selama Focus">
       <span>Grow</span>
-      <span class="switch">
-        <input type="checkbox" id="growToggle" checked onchange="syncModelState()" />
-        <span class="slider"></span>
-      </span>
+      <div class="relative inline-flex items-center">
+        <input type="checkbox" id="growToggle" checked onchange="syncModelState()" class="sr-only peer">
+        <div class="w-7 h-4 bg-white/15 rounded-full peer peer-checked:bg-[#1ed760] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white peer-checked:after:bg-zinc-950 after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:after:translate-x-3"></div>
+      </div>
     </label>
 
-    <label class="toggle-wrap" title="Tampilkan kloningan objek di kiri-kanan setiap selesai 1 lap">
+    <!-- Toggle: Show Clone -->
+    <label class="flex items-center gap-1.5 pl-2.5 border-l border-white/10 text-[11px] text-zinc-300 cursor-pointer" title="Tampilkan kloningan setiap selesai 1 lap">
       <span>Clone</span>
-      <span class="switch">
-        <input type="checkbox" id="cloneToggle" checked onchange="renderGrownClones()" />
-        <span class="slider"></span>
-      </span>
+      <div class="relative inline-flex items-center">
+        <input type="checkbox" id="cloneToggle" checked onchange="renderGrownClones()" class="sr-only peer">
+        <div class="w-7 h-4 bg-white/15 rounded-full peer peer-checked:bg-[#1ed760] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white peer-checked:after:bg-zinc-950 after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:after:translate-x-3"></div>
+      </div>
     </label>
 
-    <div class="bg-swatches" title="Ganti Warna Background">
-      <div class="swatch active" style="background: #252432;" onclick="changeBg('radial-gradient(circle at center, #252432 0%, #111115 100%)', this)" title="Midnight"></div>
-      <div class="swatch" style="background: #3d2622;" onclick="changeBg('radial-gradient(circle at center, #4a2c26 0%, #170f0e 100%)', this)" title="Warm Sunset"></div>
-      <div class="swatch" style="background: #1d332d;" onclick="changeBg('radial-gradient(circle at center, #223d35 0%, #0d1714 100%)', this)" title="Matcha Forest"></div>
-      <div class="swatch" style="background: #1e2d42;" onclick="changeBg('radial-gradient(circle at center, #253954 0%, #0d131c 100%)', this)" title="Deep Ocean"></div>
+    <!-- Toggle: Clone Movement -->
+    <label class="flex items-center gap-1.5 pl-2.5 border-l border-white/10 text-[11px] text-zinc-300 cursor-pointer" title="Kloningan ikut bergerak & berputar">
+      <span>Clone Move</span>
+      <div class="relative inline-flex items-center">
+        <input type="checkbox" id="cloneMoveToggle" checked onchange="syncModelState()" class="sr-only peer">
+        <div class="w-7 h-4 bg-white/15 rounded-full peer peer-checked:bg-[#1ed760] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white peer-checked:after:bg-zinc-950 after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:after:translate-x-3"></div>
+      </div>
+    </label>
+
+    <!-- Toggle: Clone Grow -->
+    <label class="flex items-center gap-1.5 pl-2.5 border-l border-white/10 text-[11px] text-zinc-300 cursor-pointer" title="Kloningan baru tumbuh membesar saat muncul">
+      <span>Clone Grow</span>
+      <div class="relative inline-flex items-center">
+        <input type="checkbox" id="cloneGrowToggle" checked onchange="renderGrownClones()" class="sr-only peer">
+        <div class="w-7 h-4 bg-white/15 rounded-full peer peer-checked:bg-[#1ed760] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white peer-checked:after:bg-zinc-950 after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:after:translate-x-3"></div>
+      </div>
+    </label>
+
+    <!-- Swatches Warna BG -->
+    <div class="flex items-center gap-1.5 pl-2.5 border-l border-white/10" title="Ganti Warna Background">
+      <button class="swatch w-4 h-4 rounded-full border-2 border-white scale-110 transition-transform cursor-pointer" style="background: #252432;" onclick="changeBg('radial-gradient(circle at center, #252432 0%, #111115 100%)', this)" title="Midnight"></button>
+      <button class="swatch w-4 h-4 rounded-full border-2 border-white/25 hover:scale-110 transition-transform cursor-pointer" style="background: #4a2c26;" onclick="changeBg('radial-gradient(circle at center, #4a2c26 0%, #170f0e 100%)', this)" title="Warm Sunset"></button>
+      <button class="swatch w-4 h-4 rounded-full border-2 border-white/25 hover:scale-110 transition-transform cursor-pointer" style="background: #223d35;" onclick="changeBg('radial-gradient(circle at center, #223d35 0%, #0d1714 100%)', this)" title="Matcha Forest"></button>
+      <button class="swatch w-4 h-4 rounded-full border-2 border-white/25 hover:scale-110 transition-transform cursor-pointer" style="background: #253954;" onclick="changeBg('radial-gradient(circle at center, #253954 0%, #0d131c 100%)', this)" title="Deep Ocean"></button>
     </div>
-  </div>
+  </header>
 
   <!-- Wadah Kebun 3D -->
-  <div id="forestStage">
-    <div id="grownClones"></div>
-    <model-viewer 
-      id="viewer"
-      src="https://modelviewer.dev/shared-assets/models/RobotExpressive.glb" 
-      alt="Lo-Fi 3D Scene"
-      camera-controls 
-      shadow-intensity="1"
-      exposure="0.9"
-      style="position: relative; z-index: 2;">
-    </model-viewer>
-  </div>
+  <main id="forestStage" class="relative w-full h-full transition-colors duration-500" style="background: radial-gradient(circle at center, #252432 0%, #111115 100%);">
+    <!-- Layer Kloningan -->
+    <div id="grownClones" class="absolute inset-0 pointer-events-none z-10"></div>
 
-  <!-- HUD Bawah -->
-  <div class="hud-container">
-    <div class="mode-tabs">
-      <button class="mode-btn active" id="preset25Btn" onclick="applyPreset(25, 5, 4, this)">25 / 5 (4x)</button>
-      <button class="mode-btn" id="preset50Btn" onclick="applyPreset(50, 10, 2, this)">50 / 10 (2x)</button>
-      <button class="mode-btn" id="customModeBtn" onclick="toggleCustomPanel(this)">Custom Lap</button>
+    <!-- Wrapper Objek Utama (Digeser mulus dengan CSS padding tanpa memotong kepala model) -->
+    <div id="mainStageBox" class="relative w-full h-full z-20 flex items-center justify-center pb-56 transition-all duration-500 ease-out">
+      <model-viewer 
+        id="viewer"
+        src="https://modelviewer.dev/shared-assets/models/RobotExpressive.glb" 
+        alt="Lo-Fi 3D Scene"
+        camera-controls 
+        shadow-intensity="1"
+        exposure="0.95"
+        class="w-full h-full bg-transparent transition-transform duration-700 ease-out origin-center">
+      </model-viewer>
+    </div>
+  </main>
+
+  <!-- HUD Bawah (Full Mode saat Standby, Compact Pill saat Focus Aktif) -->
+  <section id="hudContainer" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-30 w-[92%] max-w-[380px] bg-zinc-900/80 backdrop-blur-xl border border-white/10 rounded-3xl px-5 py-4 flex flex-col items-center gap-2.5 shadow-[0_24px_48px_rgba(0,0,0,0.6)] transition-all duration-300">
+    
+    <!-- Preset & Custom Lap Tabs (Disembunyikan saat Focus berjalan) -->
+    <div id="hudTabs" class="flex items-center gap-1.5">
+      <button class="mode-btn active px-3 py-1 rounded-full text-[11px] font-semibold bg-zinc-100 text-zinc-950 border border-zinc-100 transition cursor-pointer" id="preset25Btn" onclick="applyPreset(25, 5, 4, this)">25 / 5 (4x)</button>
+      <button class="mode-btn px-3 py-1 rounded-full text-[11px] text-zinc-400 border border-white/15 hover:text-white transition cursor-pointer" id="preset50Btn" onclick="applyPreset(50, 10, 2, this)">50 / 10 (2x)</button>
+      <button class="mode-btn px-3 py-1 rounded-full text-[11px] text-zinc-400 border border-white/15 hover:text-white transition cursor-pointer" id="customModeBtn" onclick="toggleCustomPanel(this)">Custom Lap</button>
     </div>
 
-    <div class="custom-settings-grid" id="customPanel">
-      <div class="input-group">
-        <label for="focusInput">Focus (m)</label>
-        <input type="number" id="focusInput" class="custom-input" min="1" max="180" value="25" />
+    <!-- Panel Input Custom Focus, Break & Laps -->
+    <div id="customPanel" class="hidden grid-cols-4 gap-2 items-end w-full bg-white/5 border border-white/10 p-2.5 rounded-xl">
+      <div class="flex flex-col items-center gap-1">
+        <label class="text-[9px] uppercase tracking-wider text-zinc-400">Focus (m)</label>
+        <input type="number" id="focusInput" min="1" max="180" value="25" class="w-full bg-white/10 border border-white/15 text-white py-1 rounded-lg text-center text-xs font-semibold outline-none focus:border-[#1ed760]" />
       </div>
-      <div class="input-group">
-        <label for="breakInput">Break (m)</label>
-        <input type="number" id="breakInput" class="custom-input" min="1" max="60" value="5" />
+      <div class="flex flex-col items-center gap-1">
+        <label class="text-[9px] uppercase tracking-wider text-zinc-400">Break (m)</label>
+        <input type="number" id="breakInput" min="1" max="60" value="5" class="w-full bg-white/10 border border-white/15 text-white py-1 rounded-lg text-center text-xs font-semibold outline-none focus:border-[#1ed760]" />
       </div>
-      <div class="input-group">
-        <label for="lapsInput">Laps</label>
-        <input type="number" id="lapsInput" class="custom-input" min="1" max="12" value="4" />
+      <div class="flex flex-col items-center gap-1">
+        <label class="text-[9px] uppercase tracking-wider text-zinc-400">Laps</label>
+        <input type="number" id="lapsInput" min="1" max="12" value="4" class="w-full bg-white/10 border border-white/15 text-white py-1 rounded-lg text-center text-xs font-semibold outline-none focus:border-[#1ed760]" />
       </div>
-      <button class="mode-btn active" style="height: 26px;" onclick="applyCustomSettings()">Set</button>
+      <button onclick="applyCustomSettings()" class="h-7 rounded-lg bg-zinc-100 text-zinc-950 text-xs font-semibold hover:bg-white transition cursor-pointer">Set</button>
     </div>
 
-    <div class="session-status">
-      <span class="phase-pill" id="phaseBadge">FOCUS</span>
-      <span id="lapText">LAP 1 / 4</span>
-      <div class="lap-dots" id="lapDots"></div>
-      <span class="forest-badge" id="forestCount" title="Jumlah pohon/sesi selesai">🌲 0</span>
-    </div>
-
-    <div class="timer-display" id="timer" onclick="if(!isRunning) toggleCustomPanel(document.getElementById('customModeBtn'))" title="Klik untuk atur Focus, Break & Lap">25:00</div>
-
-    <div class="timer-controls">
-      <button class="btn-timer primary" id="startBtn" onclick="toggleTimer()">Start</button>
-      <button class="btn-timer" onclick="skipPhase()" title="Lompat ke sesi berikutnya">Skip</button>
-      <button class="btn-timer" onclick="resetSession()">Reset</button>
-    </div>
-
-    <div class="spotify-player">
-      <div class="track-info">
-        <span class="track-title" id="trackName">Lo-Fi Synth & Rain (Built-in)</span>
-        <span class="track-badge" id="audioStatus">READY</span>
+    <!-- Baris Utama (Status + Timer + Tombol + Spotify Mini) -->
+    <div id="hudMainRow" class="flex flex-col items-center gap-2.5 w-full">
+      <!-- Status Phase & Lap -->
+      <div id="statusRow" class="flex items-center gap-2 text-[10px] font-semibold tracking-wider text-zinc-400 uppercase">
+        <span id="phaseBadge" class="px-2 py-0.5 rounded-full bg-white/10 text-zinc-100">FOCUS</span>
+        <span id="lapText">LAP 1 / 4</span>
+        <div id="lapDots" class="flex gap-1"></div>
+        <span id="forestCount" class="px-2 py-0.5 rounded-full bg-[#1ed760]/15 text-[#1ed760]">🌲 0</span>
       </div>
 
-      <div class="player-controls-row">
-        <div class="transport-btns">
-          <button class="icon-btn active" onclick="playRandomTrack()" title="Shuffle Track">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line>
-              <polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line>
-              <line x1="4" y1="4" x2="9" y2="9"></line>
-            </svg>
-          </button>
+      <!-- Angka Timer -->
+      <div id="timer" onclick="if(!isRunning) toggleCustomPanel(document.getElementById('customModeBtn'))" title="Klik untuk atur Focus, Break & Lap" class="text-[44px] font-bold tracking-wider tabular-nums leading-none cursor-pointer hover:opacity-90 transition-all">25:00</div>
 
-          <button class="spotify-play-btn" id="audioBtn" onclick="toggleAudio()" title="Play / Pause">
-            <svg id="playIcon" width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
-              <polygon points="6 3 20 12 6 21 6 3"></polygon>
-            </svg>
-            <svg id="pauseIcon" width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="display: none;">
-              <rect x="6" y="4" width="4" height="16"></rect>
-              <rect x="14" y="4" width="4" height="16"></rect>
-            </svg>
-          </button>
+      <!-- Tombol Kontrol Timer -->
+      <div class="flex items-center gap-2">
+        <button id="startBtn" onclick="toggleTimer()" class="px-4 py-1.5 rounded-full bg-zinc-100 text-zinc-950 text-xs font-semibold hover:bg-white active:scale-95 transition cursor-pointer">Start</button>
+        <button onclick="skipPhase()" title="Lompat ke sesi berikutnya" class="px-3.5 py-1.5 rounded-full bg-white/10 text-zinc-200 border border-white/10 text-xs font-semibold hover:bg-white/20 active:scale-95 transition cursor-pointer">Skip</button>
+        <button onclick="resetSession()" class="px-3.5 py-1.5 rounded-full bg-white/10 text-zinc-200 border border-white/10 text-xs font-semibold hover:bg-white/20 active:scale-95 transition cursor-pointer">Reset</button>
+      </div>
 
-          <button class="icon-btn" onclick="playNextTrack()" title="Next Track">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
-              <polygon points="5 4 15 12 5 20 5 4"></polygon>
-              <line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2"></line>
-            </svg>
-          </button>
+      <!-- Spotify-Style Audio Player -->
+      <div id="spotifyBox" class="w-full pt-2.5 border-t border-white/10 flex flex-col gap-2">
+        <div id="trackInfoRow" class="flex justify-between items-center text-[11px]">
+          <span id="trackName" class="text-zinc-200 font-medium truncate max-w-[230px]">Midnight Rhodes & Rain (Synth)</span>
+          <span id="audioStatus" class="text-[9px] px-2 py-0.5 rounded-full bg-[#1ed760]/20 text-[#1ed760] font-bold">READY</span>
         </div>
 
-        <div class="volume-box">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a1a1aa" stroke-width="2">
-            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-          </svg>
-          <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="0.5" oninput="changeVolume(this.value)" />
+        <div class="flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <!-- Shuffle -->
+            <button onclick="playRandomTrack()" title="Shuffle Track" class="text-[#1ed760] hover:scale-110 transition cursor-pointer">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line>
+                <polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line>
+                <line x1="4" y1="4" x2="9" y2="9"></line>
+              </svg>
+            </button>
+
+            <!-- Spotify Circle Play/Pause -->
+            <button id="audioBtn" onclick="toggleAudio()" title="Play / Pause" class="w-8 h-8 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-md hover:scale-105 active:scale-95 transition cursor-pointer">
+              <svg id="playIcon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" class="ml-0.5">
+                <polygon points="6 3 20 12 6 21 6 3"></polygon>
+              </svg>
+              <svg id="pauseIcon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" class="hidden">
+                <rect x="6" y="4" width="4" height="16"></rect>
+                <rect x="14" y="4" width="4" height="16"></rect>
+              </svg>
+            </button>
+
+            <!-- Next -->
+            <button onclick="playNextTrack()" title="Next Track" class="text-zinc-400 hover:text-white hover:scale-110 transition cursor-pointer">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="5 4 15 12 5 20 5 4"></polygon>
+                <line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2"></line>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Volume -->
+          <div id="volumeBox" class="flex items-center gap-1.5 flex-1 max-w-[110px]">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#a1a1aa" stroke-width="2">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+            </svg>
+            <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="0.5" oninput="changeVolume(this.value)" class="w-full h-1 accent-[#1ed760] cursor-pointer" />
+          </div>
         </div>
       </div>
     </div>
-  </div>
+  </section>
 
   <audio id="bgAudio"></audio>
 
@@ -565,25 +226,35 @@
     let isRunning = false;
     let forestStageModels = [];
 
-    let baseRadius = null;
-    let baseTargetY = 0;
-    let modelHeight = 1;
-
+    const topBarEl = document.getElementById("topBar");
     const forestStageEl = document.getElementById("forestStage");
     const grownClonesEl = document.getElementById("grownClones");
+    const mainStageBoxEl = document.getElementById("mainStageBox");
     const viewerEl = document.getElementById("viewer");
     const modelSelect = document.getElementById("modelSelect");
+
     const motionToggle = document.getElementById("motionToggle");
     const growToggle = document.getElementById("growToggle");
     const cloneToggle = document.getElementById("cloneToggle");
+    const cloneMoveToggle = document.getElementById("cloneMoveToggle");
+    const cloneGrowToggle = document.getElementById("cloneGrowToggle");
+
+    // HUD Elements
+    const hudContainer = document.getElementById("hudContainer");
+    const hudTabs = document.getElementById("hudTabs");
+    const customPanel = document.getElementById("customPanel");
+    const hudMainRow = document.getElementById("hudMainRow");
+    const statusRow = document.getElementById("statusRow");
+    const lapDotsEl = document.getElementById("lapDots");
     const timerEl = document.getElementById("timer");
     const startBtn = document.getElementById("startBtn");
-    const customPanel = document.getElementById("customPanel");
+    const spotifyBox = document.getElementById("spotifyBox");
+    const trackInfoRow = document.getElementById("trackInfoRow");
+    const volumeBox = document.getElementById("volumeBox");
+
     const phaseBadge = document.getElementById("phaseBadge");
     const lapText = document.getElementById("lapText");
-    const lapDotsEl = document.getElementById("lapDots");
     const forestCountEl = document.getElementById("forestCount");
-
     const focusInput = document.getElementById("focusInput");
     const breakInput = document.getElementById("breakInput");
     const lapsInput = document.getElementById("lapsInput");
@@ -594,29 +265,58 @@
     const trackNameEl = document.getElementById("trackName");
     const audioStatusEl = document.getElementById("audioStatus");
 
-    // --- 1. CAMERA FRAMING, GROWTH SCALE & ANIMATED CLONES ---
-    viewerEl.addEventListener("load", () => {
-      const orbit = viewerEl.getCameraOrbit();
-      const target = viewerEl.getCameraTarget();
-      const dims = viewerEl.getDimensions();
-
-      baseRadius = orbit.radius;
-      baseTargetY = target.y;
-      modelHeight = dims.y || 1;
-
-      syncModelState();
-    });
-
-    function updateCameraPosition() {
-      if (!baseRadius) return;
+    // --- 1. HUD COMPACT MODE & STAGE POSITIONING (TANPA MEMOTONG KEPALA MODEL) ---
+    function updateHudLayout() {
       if (isRunning) {
-        viewerEl.setAttribute("camera-target", `0m ${baseTargetY}m 0m`);
+        // Mode Compact Pill saat Focus berjalan
+        topBarEl.classList.add("opacity-50", "hover:opacity-100");
+        mainStageBoxEl.classList.remove("pb-56");
+        mainStageBoxEl.classList.add("pb-16");
+
+        hudContainer.classList.remove("max-w-[380px]", "rounded-3xl", "px-5", "py-4", "flex-col");
+        hudContainer.classList.add("max-w-[540px]", "rounded-full", "px-5", "py-2.5");
+
+        hudTabs.classList.add("hidden");
+        customPanel.classList.add("hidden");
+        customPanel.classList.remove("grid");
+
+        hudMainRow.classList.remove("flex-col");
+        hudMainRow.classList.add("flex-row", "justify-between");
+
+        lapDotsEl.classList.add("hidden");
+        timerEl.classList.remove("text-[44px]");
+        timerEl.classList.add("text-2xl");
+
+        spotifyBox.classList.remove("w-full", "pt-2.5", "border-t");
+        spotifyBox.classList.add("w-auto", "pl-3", "border-l");
+        trackInfoRow.classList.add("hidden");
+        volumeBox.classList.add("hidden");
       } else {
-        const offsetDown = modelHeight * 0.28;
-        viewerEl.setAttribute("camera-target", `0m ${baseTargetY - offsetDown}m 0m`);
+        // Mode Standby Lengkap
+        topBarEl.classList.remove("opacity-50", "hover:opacity-100");
+        mainStageBoxEl.classList.add("pb-56");
+        mainStageBoxEl.classList.remove("pb-16");
+
+        hudContainer.classList.add("max-w-[380px]", "rounded-3xl", "px-5", "py-4", "flex-col");
+        hudContainer.classList.remove("max-w-[540px]", "rounded-full", "px-5", "py-2.5");
+
+        hudTabs.classList.remove("hidden");
+
+        hudMainRow.classList.add("flex-col");
+        hudMainRow.classList.remove("flex-row", "justify-between");
+
+        lapDotsEl.classList.remove("hidden");
+        timerEl.classList.add("text-[44px]");
+        timerEl.classList.remove("text-2xl");
+
+        spotifyBox.classList.add("w-full", "pt-2.5", "border-t");
+        spotifyBox.classList.remove("w-auto", "pl-3", "border-l");
+        trackInfoRow.classList.remove("hidden");
+        volumeBox.classList.remove("hidden");
       }
     }
 
+    // --- 2. GROWTH SCALE, MOTION & CLONES ---
     function updateModelGrowthScale() {
       viewerEl.scale = "1 1 1";
 
@@ -630,6 +330,7 @@
         const elapsed = Math.max(0, totalFocusSec - timeLeft);
         const progress = Math.min(1, elapsed / totalFocusSec);
 
+        // Tumbuh dari 0.35 (35%) hingga 1.0 (100%)
         const minScale = 0.35;
         const s = (minScale + (1 - minScale) * progress).toFixed(4);
         viewerEl.style.transform = `scale(${s})`;
@@ -638,7 +339,6 @@
       }
     }
 
-    // Sinkronkan animasi kerangka + rotasi untuk model utama MAUPUN semua kloningan
     function applyMotionToElement(el, active) {
       if (active) {
         if (el.availableAnimations && el.availableAnimations.length > 0) {
@@ -655,16 +355,17 @@
     }
 
     function syncModelState() {
-      document.body.classList.toggle("focus-active", isRunning);
-      updateCameraPosition();
+      updateHudLayout();
       updateModelGrowthScale();
 
-      const shouldAnimate = isRunning && motionToggle.checked;
-      applyMotionToElement(viewerEl, shouldAnimate);
+      // Gerak objek utama
+      const mainShouldMove = isRunning && motionToggle.checked;
+      applyMotionToElement(viewerEl, mainShouldMove);
 
-      // Ikut gerakkan semua kloningan yang sudah muncul di layar
+      // Gerak objek kloningan (dikontrol terpisah oleh Clone Move)
+      const clonesShouldMove = isRunning && cloneMoveToggle.checked;
       grownClonesEl.querySelectorAll("model-viewer").forEach(cloneEl => {
-        applyMotionToElement(cloneEl, shouldAnimate);
+        applyMotionToElement(cloneEl, clonesShouldMove);
       });
     }
 
@@ -673,9 +374,9 @@
       if (!cloneToggle.checked || treesGrown <= 0) return;
 
       const currentSrc = viewerEl.getAttribute("src");
-      const offsets = [-22, 22, -36, 36, -14, 14, -44, 44];
+      const offsets = [-23, 23, -37, 37, -14, 14, -45, 45];
       const count = Math.min(treesGrown, offsets.length);
-      const shouldAnimate = isRunning && motionToggle.checked;
+      const clonesShouldMove = isRunning && cloneMoveToggle.checked;
 
       for (let i = 0; i < count; i++) {
         const clone = document.createElement("model-viewer");
@@ -685,29 +386,38 @@
         clone.setAttribute("camera-orbit", `${(i % 2 === 0 ? 25 : -25)}deg 75deg auto`);
         
         const xOffset = offsets[i];
-        const yOffset = (i % 2 === 0) ? -4 : -8;
-        const cloneScale = 0.55;
+        const yOffset = (i % 2 === 0) ? -6 : -11;
+        const cloneScale = 0.52;
 
-        clone.style.cssText = `
+        clone.style.setProperty("--tx", `${xOffset}%`);
+        clone.style.setProperty("--ty", `${yOffset}%`);
+        clone.style.setProperty("--ts", `${cloneScale}`);
+        clone.style.cssText += `
           position: absolute;
           width: 100%;
           height: 100%;
           left: 0;
           top: 0;
           background: transparent;
-          opacity: 0.88;
-          transform: translate(${xOffset}%, ${yOffset}%) scale(${cloneScale});
-          transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
           pointer-events: none;
         `;
 
+        if (cloneGrowToggle.checked) {
+          clone.classList.add("animate-clone-grow");
+        } else {
+          clone.style.opacity = "0.9";
+          clone.style.transform = `translate(${xOffset}%, ${yOffset}%) scale(${cloneScale})`;
+        }
+
         clone.addEventListener("load", () => {
-          applyMotionToElement(clone, isRunning && motionToggle.checked);
+          applyMotionToElement(clone, isRunning && cloneMoveToggle.checked);
         });
 
         grownClonesEl.appendChild(clone);
       }
     }
+
+    viewerEl.addEventListener("load", syncModelState);
 
     function updateForestStageModel() {
       if (forestStageModels.length > 0) {
@@ -722,18 +432,21 @@
     }
 
     function changeModel(modelUrl) {
-      baseRadius = null;
       viewerEl.src = modelUrl;
       renderGrownClones();
     }
 
     function changeBg(gradientCss, swatchEl) {
       forestStageEl.style.background = gradientCss;
-      document.querySelectorAll(".swatch").forEach(s => s.classList.remove("active"));
-      swatchEl.classList.add("active");
+      document.querySelectorAll(".swatch").forEach(s => {
+        s.classList.remove("border-white", "scale-110");
+        s.classList.add("border-white/25");
+      });
+      swatchEl.classList.remove("border-white/25");
+      swatchEl.classList.add("border-white", "scale-110");
     }
 
-    // --- 2. GENTLE CHIME ---
+    // --- 3. GENTLE CHIME ---
     function playChime() {
       try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -751,7 +464,7 @@
       } catch (e) {}
     }
 
-    // --- 3. TIMER & LAP LOGIC ---
+    // --- 4. TIMER & LAP LOGIC ---
     function renderSessionUI() {
       const mins = Math.floor(timeLeft / 60).toString().padStart(2, "0");
       const secs = (timeLeft % 60).toString().padStart(2, "0");
@@ -759,16 +472,24 @@
       document.title = `${mins}:${secs} (${currentPhase.toUpperCase()} ${currentLap}/${totalLaps})`;
 
       phaseBadge.textContent = currentPhase === "focus" ? "FOCUS" : "BREAK";
-      phaseBadge.classList.toggle("break", currentPhase === "break");
+      if (currentPhase === "break") {
+        phaseBadge.classList.remove("bg-white/10", "text-zinc-100");
+        phaseBadge.classList.add("bg-sky-400/20", "text-sky-400");
+      } else {
+        phaseBadge.classList.add("bg-white/10", "text-zinc-100");
+        phaseBadge.classList.remove("bg-sky-400/20", "text-sky-400");
+      }
+
       lapText.textContent = `LAP ${currentLap} / ${totalLaps}`;
       forestCountEl.textContent = `🌲 ${treesGrown}`;
 
       lapDotsEl.innerHTML = "";
       for (let i = 1; i <= totalLaps; i++) {
         const dot = document.createElement("span");
-        dot.className = "lap-dot";
-        if (i < currentLap) dot.classList.add("done");
-        else if (i === currentLap) dot.classList.add("current");
+        dot.className = "w-1.5 h-1.5 rounded-full transition-all ";
+        if (i < currentLap) dot.className += "bg-[#1ed760]";
+        else if (i === currentLap) dot.className += "bg-white scale-125";
+        else dot.className += "bg-white/20";
         lapDotsEl.appendChild(dot);
       }
     }
@@ -822,7 +543,8 @@
       } else {
         isRunning = true;
         startBtn.textContent = "Pause";
-        customPanel.classList.remove("show");
+        customPanel.classList.add("hidden");
+        customPanel.classList.remove("grid");
         timerId = setInterval(() => {
           if (timeLeft > 0) {
             timeLeft--;
@@ -853,10 +575,19 @@
       syncModelState();
     }
 
+    function setActiveTab(activeBtn) {
+      document.querySelectorAll(".mode-btn").forEach(b => {
+        b.classList.remove("bg-zinc-100", "text-zinc-950", "border-zinc-100", "font-semibold");
+        b.classList.add("text-zinc-400", "border-white/15");
+      });
+      activeBtn.classList.remove("text-zinc-400", "border-white/15");
+      activeBtn.classList.add("bg-zinc-100", "text-zinc-950", "border-zinc-100", "font-semibold");
+    }
+
     function applyPreset(fMins, bMins, laps, btnEl) {
-      document.querySelectorAll(".mode-tabs .mode-btn").forEach(b => b.classList.remove("active"));
-      btnEl.classList.add("active");
-      customPanel.classList.remove("show");
+      setActiveTab(btnEl);
+      customPanel.classList.add("hidden");
+      customPanel.classList.remove("grid");
 
       focusMinutes = fMins;
       breakMinutes = bMins;
@@ -870,9 +601,14 @@
     }
 
     function toggleCustomPanel(btnEl) {
-      document.querySelectorAll(".mode-tabs .mode-btn").forEach(b => b.classList.remove("active"));
-      btnEl.classList.add("active");
-      customPanel.classList.toggle("show");
+      setActiveTab(btnEl);
+      if (customPanel.classList.contains("hidden")) {
+        customPanel.classList.remove("hidden");
+        customPanel.classList.add("grid");
+      } else {
+        customPanel.classList.add("hidden");
+        customPanel.classList.remove("grid");
+      }
     }
 
     function applyCustomSettings() {
@@ -884,11 +620,12 @@
       if (b > 0 && b <= 60) breakMinutes = b;
       if (l > 0 && l <= 20) totalLaps = l;
 
-      customPanel.classList.remove("show");
+      customPanel.classList.add("hidden");
+      customPanel.classList.remove("grid");
       resetSession();
     }
 
-    // --- 4. BUILT-IN LO-FI SYNTH ENGINE + MP3 PLAYLIST ---
+    // --- 5. BUILT-IN LO-FI SYNTH ENGINE + MP3 PLAYLIST ---
     const playlist = [
       { title: "Midnight Rhodes & Rain (Synth)", type: "synth", chords: [[261.63, 329.63, 392.00, 493.88], [220.00, 261.63, 329.63, 392.00], [174.61, 220.00, 261.63, 329.63], [196.00, 246.94, 293.66, 349.23]] },
       { title: "Warm Sunset Jazz Chords (Synth)", type: "synth", chords: [[293.66, 349.23, 440.00, 523.25], [196.00, 246.94, 293.66, 349.23], [261.63, 329.63, 392.00, 493.88], [220.00, 261.63, 329.63, 392.00]] }
@@ -907,12 +644,12 @@
     function setPlayingUI(playing) {
       isAudioPlaying = playing;
       if (playing) {
-        playIcon.style.display = "none";
-        pauseIcon.style.display = "block";
+        playIcon.classList.add("hidden");
+        pauseIcon.classList.remove("hidden");
         audioStatusEl.textContent = "PLAYING";
       } else {
-        playIcon.style.display = "block";
-        pauseIcon.style.display = "none";
+        playIcon.classList.remove("hidden");
+        pauseIcon.classList.add("hidden");
         audioStatusEl.textContent = "PAUSED";
       }
     }
@@ -939,7 +676,6 @@
       masterGain.gain.value = masterVolume * 0.35;
       masterGain.connect(synthCtx.destination);
 
-      // Suara rintik hujan lembut (Pink/Brown noise filtered)
       const bufferSize = synthCtx.sampleRate * 2;
       const noiseBuffer = synthCtx.createBuffer(1, bufferSize, synthCtx.sampleRate);
       const output = noiseBuffer.getChannelData(0);
@@ -961,7 +697,6 @@
       filter.connect(masterGain);
       rainNode.start();
 
-      // Mainkan progresi akor elektrik piano lo-fi tiap 3.2 detik
       let step = 0;
       const playChord = () => {
         if (!isAudioPlaying) return;
@@ -1055,7 +790,7 @@
       }
     }
 
-    // --- 5. AUTO-FETCH FILE .GLB & .MP3 DARI GITHUB REPO ---
+    // --- 6. AUTO-FETCH FILE .GLB & .MP3 DARI GITHUB REPO ---
     const GITHUB_USER = "scarlet-azure";
     const GITHUB_REPO = "lofi-3d-timer";
 
@@ -1080,6 +815,7 @@
             opt.value = file.name;
             const cleanName = file.name.replace(/\.glb$/i, "").replace(/[-_]/g, " ");
             opt.textContent = `3D: ${cleanName.replace(/\b\w/g, l => l.toUpperCase())}`;
+            opt.className = "bg-zinc-900";
             modelSelect.appendChild(opt);
 
             if (index === 0) {
