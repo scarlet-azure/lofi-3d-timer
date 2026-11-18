@@ -28,13 +28,13 @@
       --poster-color: transparent;
     }
 
-    /* Top Bar untuk Setting Scene & Warna */
+    /* Top Bar untuk Setting Scene, Motion Toggle & Warna */
     .top-bar {
       position: fixed;
       top: 24px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(24, 24, 30, 0.6);
+      background: rgba(24, 24, 30, 0.65);
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
       border: 1px solid rgba(255, 255, 255, 0.12);
@@ -42,9 +42,10 @@
       padding: 8px 18px;
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 14px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
       z-index: 10;
+      max-width: 94vw;
     }
 
     .scene-select {
@@ -59,10 +60,57 @@
     }
     .scene-select option { background: #18181e; color: #f4f4f6; }
 
-    .bg-swatches { display: flex; align-items: center; gap: 8px; }
-    .swatch {
-      width: 18px;
+    /* Toggle Switch Motion */
+    .motion-toggle-wrap {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12px;
+      color: #d4d4d8;
+      cursor: pointer;
+      user-select: none;
+      padding-left: 4px;
+      border-left: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 34px;
       height: 18px;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background-color: rgba(255, 255, 255, 0.16);
+      transition: .25s;
+      border-radius: 999px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 12px;
+      width: 12px;
+      left: 3px;
+      bottom: 3px;
+      background-color: #f4f4f6;
+      transition: .25s;
+      border-radius: 50%;
+    }
+    input:checked + .slider { background-color: #1ed760; }
+    input:checked + .slider:before { transform: translateX(16px); background-color: #121216; }
+
+    .bg-swatches { 
+      display: flex; 
+      align-items: center; 
+      gap: 7px; 
+      padding-left: 8px;
+      border-left: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    .swatch {
+      width: 17px;
+      height: 17px;
       border-radius: 50%;
       border: 2px solid rgba(255, 255, 255, 0.25);
       cursor: pointer;
@@ -170,10 +218,7 @@
       background: rgba(56, 189, 248, 0.18);
       color: #38bdf8;
     }
-    .lap-dots {
-      display: flex;
-      gap: 5px;
-    }
+    .lap-dots { display: flex; gap: 5px; }
     .lap-dot {
       width: 7px;
       height: 7px;
@@ -303,11 +348,21 @@
 </head>
 <body>
 
-  <!-- Top Bar: Pilih Model 3D & Ganti Warna BG -->
+  <!-- Top Bar: Pilih Model 3D, Toggle Animasi & Warna BG -->
   <div class="top-bar">
     <select id="modelSelect" class="scene-select" onchange="changeModel(this.value)" title="Pilih Model 3D">
-      <option value="https://modelviewer.dev/shared-assets/models/Astronaut.glb">3D: Astronaut (Default)</option>
+      <option value="https://modelviewer.dev/shared-assets/models/RobotExpressive.glb">3D: Lo-Fi Robot (Animated)</option>
+      <option value="https://modelviewer.dev/shared-assets/models/Astronaut.glb">3D: Astronaut</option>
     </select>
+
+    <!-- Toggle Animasi Saat Timer Berjalan -->
+    <label class="motion-toggle-wrap" title="Aktifkan animasi 3D saat timer berjalan">
+      <span>Motion</span>
+      <span class="switch">
+        <input type="checkbox" id="motionToggle" checked onchange="syncModelAnimation()" />
+        <span class="slider"></span>
+      </span>
+    </label>
 
     <div class="bg-swatches" title="Ganti Warna Background">
       <div class="swatch active" style="background: #252432;" onclick="changeBg('radial-gradient(circle at center, #252432 0%, #111115 100%)', this)" title="Midnight"></div>
@@ -320,10 +375,8 @@
   <!-- Kanvas 3D -->
   <model-viewer 
     id="viewer"
-    src="https://modelviewer.dev/shared-assets/models/Astronaut.glb" 
+    src="https://modelviewer.dev/shared-assets/models/RobotExpressive.glb" 
     alt="Lo-Fi 3D Scene"
-    auto-rotate 
-    rotation-per-second="10deg"
     camera-controls 
     shadow-intensity="1"
     exposure="0.9">
@@ -428,12 +481,13 @@
     let breakMinutes = 5;
     let totalLaps = 4;
     let currentLap = 1;
-    let currentPhase = "focus"; // "focus" atau "break"
+    let currentPhase = "focus";
     let timeLeft = focusMinutes * 60;
     let timerId = null;
     let isRunning = false;
 
     const viewerEl = document.getElementById("viewer");
+    const motionToggle = document.getElementById("motionToggle");
     const timerEl = document.getElementById("timer");
     const startBtn = document.getElementById("startBtn");
     const customPanel = document.getElementById("customPanel");
@@ -451,7 +505,33 @@
     const trackNameEl = document.getElementById("trackName");
     const audioStatusEl = document.getElementById("audioStatus");
 
-    // --- 1. SCENE & BACKGROUND CONTROLS ---
+    // --- 1. ANIMASI 3D SINKRON DENGAN TIMER ---
+    function syncModelAnimation() {
+      const shouldAnimate = isRunning && motionToggle.checked;
+
+      if (shouldAnimate) {
+        // 1. Jika model .glb punya embedded animation (dari Blender / preset), putar!
+        if (viewerEl.availableAnimations && viewerEl.availableAnimations.length > 0) {
+          // Pilih animasi santai seperti Idle/Walking jika ada, atau animasi pertama
+          const preferred = viewerEl.availableAnimations.find(a => /idle|walk|dance|wave/i.test(a));
+          viewerEl.animationName = preferred || viewerEl.availableAnimations[0];
+          viewerEl.play();
+        }
+        // 2. Aktifkan rotasi orbital halus agar objek statis tetap terasa hidup
+        viewerEl.setAttribute("auto-rotate", "");
+        viewerEl.setAttribute("rotation-per-second", currentPhase === "focus" ? "12deg" : "5deg");
+      } else {
+        // Hentikan animasi & rotasi saat timer pause / selesai / toggle mati
+        if (typeof viewerEl.pause === "function") {
+          viewerEl.pause();
+        }
+        viewerEl.removeAttribute("auto-rotate");
+      }
+    }
+
+    // Pastikan status animasi langsung menyesuaikan begitu model 3D baru selesai dimuat
+    viewerEl.addEventListener("load", syncModelAnimation);
+
     function changeModel(modelUrl) {
       viewerEl.src = modelUrl;
     }
@@ -469,7 +549,7 @@
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = "sine";
-        osc.frequency.setValueAtTime(528, ctx.currentTime); // Nada lembut 528Hz
+        osc.frequency.setValueAtTime(528, ctx.currentTime);
         osc.frequency.exponentialRampToValueAtTime(792, ctx.currentTime + 0.4);
         gain.gain.setValueAtTime(0.15, ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.2);
@@ -491,7 +571,6 @@
       phaseBadge.classList.toggle("break", currentPhase === "break");
       lapText.textContent = `LAP ${currentLap} / ${totalLaps}`;
 
-      // Render titik indikator lap
       lapDotsEl.innerHTML = "";
       for (let i = 1; i <= totalLaps; i++) {
         const dot = document.createElement("span");
@@ -506,12 +585,12 @@
       playChime();
 
       if (currentPhase === "focus") {
-        // Jika sudah lap terakhir, seluruh sesi selesai
         if (currentLap >= totalLaps) {
           clearInterval(timerId);
           isRunning = false;
           startBtn.textContent = "Start Focus";
-          // Tandai semua titik hijau
+          syncModelAnimation();
+
           currentLap = totalLaps + 1;
           renderSessionUI();
           lapText.textContent = `DONE (${totalLaps}/${totalLaps})`;
@@ -519,21 +598,22 @@
           timeLeft = focusMinutes * 60;
           return;
         }
-        // Pindah ke mode Break
         currentPhase = "break";
         timeLeft = breakMinutes * 60;
       } else {
-        // Selesai Break -> Naik ke Lap berikutnya & masuk Focus
         currentPhase = "focus";
         currentLap++;
         timeLeft = focusMinutes * 60;
       }
 
       renderSessionUI();
+      syncModelAnimation();
+
       if (!autoContinue) {
         clearInterval(timerId);
         isRunning = false;
         startBtn.textContent = currentPhase === "focus" ? "Start Focus" : "Start Break";
+        syncModelAnimation();
       }
     }
 
@@ -554,6 +634,7 @@
           }
         }, 1000);
       }
+      syncModelAnimation();
     }
 
     function skipPhase() {
@@ -568,6 +649,7 @@
       timeLeft = focusMinutes * 60;
       startBtn.textContent = "Start Focus";
       renderSessionUI();
+      syncModelAnimation();
     }
 
     function applyPreset(fMins, bMins, laps, btnEl) {
@@ -692,16 +774,6 @@
       renderSessionUI();
 
       const modelSelect = document.getElementById("modelSelect");
-      const defaultModels = [
-        { name: "Lo-Fi Robot (Preset)", url: "https://modelviewer.dev/shared-assets/models/RobotExpressive.glb" }
-      ];
-
-      defaultModels.forEach(m => {
-        const opt = document.createElement("option");
-        opt.value = m.url;
-        opt.textContent = `3D: ${m.name}`;
-        modelSelect.appendChild(opt);
-      });
 
       try {
         const res = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/`);
@@ -737,6 +809,7 @@
 
       const randomStart = Math.floor(Math.random() * playlist.length);
       loadTrack(randomStart, false);
+      syncModelAnimation();
     }
 
     initApp();
