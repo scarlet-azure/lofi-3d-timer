@@ -15,9 +15,7 @@
       -webkit-appearance: none; 
       margin: 0; 
     }
-    input[type=number] {
-      -moz-appearance: textfield;
-    }
+    input[type=number] { -moz-appearance: textfield; }
 
     /* Kanvas 3D Full Screen */
     model-viewer {
@@ -28,24 +26,26 @@
       --poster-color: transparent;
     }
 
-    /* Top Bar untuk Setting Scene, Motion Toggle & Warna */
+    /* Top Bar untuk Setting Scene, Motion/Grow Toggle & Warna */
     .top-bar {
       position: fixed;
       top: 24px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(24, 24, 30, 0.65);
+      background: rgba(24, 24, 30, 0.68);
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
       border: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: 999px;
-      padding: 8px 18px;
+      padding: 8px 16px;
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 12px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
       z-index: 10;
-      max-width: 94vw;
+      max-width: 95vw;
+      flex-wrap: wrap;
+      justify-content: center;
     }
 
     .scene-select {
@@ -60,22 +60,22 @@
     }
     .scene-select option { background: #18181e; color: #f4f4f6; }
 
-    /* Toggle Switch Motion */
-    .motion-toggle-wrap {
+    /* Toggle Switch */
+    .toggle-wrap {
       display: flex;
       align-items: center;
-      gap: 7px;
+      gap: 6px;
       font-size: 12px;
       color: #d4d4d8;
       cursor: pointer;
       user-select: none;
-      padding-left: 4px;
+      padding-left: 8px;
       border-left: 1px solid rgba(255, 255, 255, 0.12);
     }
     .switch {
       position: relative;
       display: inline-block;
-      width: 34px;
+      width: 32px;
       height: 18px;
     }
     .switch input { opacity: 0; width: 0; height: 0; }
@@ -99,7 +99,7 @@
       border-radius: 50%;
     }
     input:checked + .slider { background-color: #1ed760; }
-    input:checked + .slider:before { transform: translateX(16px); background-color: #121216; }
+    input:checked + .slider:before { transform: translateX(14px); background-color: #121216; }
 
     .bg-swatches { 
       display: flex; 
@@ -109,8 +109,8 @@
       border-left: 1px solid rgba(255, 255, 255, 0.12);
     }
     .swatch {
-      width: 17px;
-      height: 17px;
+      width: 16px;
+      height: 16px;
       border-radius: 50%;
       border: 2px solid rgba(255, 255, 255, 0.25);
       cursor: pointer;
@@ -134,7 +134,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 12px;
+      gap: 11px;
       width: 92%;
       max-width: 400px;
       box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5);
@@ -197,14 +197,14 @@
     }
     .custom-input:focus { border-color: #1ed760; }
 
-    /* Status Phase & Lap Indicator */
+    /* Status Phase, Lap & Forest Growth Indicator */
     .session-status {
       display: flex;
       align-items: center;
       gap: 8px;
       font-size: 11px;
       font-weight: 600;
-      letter-spacing: 1px;
+      letter-spacing: 0.8px;
       color: #a1a1aa;
       text-transform: uppercase;
     }
@@ -217,6 +217,14 @@
     .phase-pill.break {
       background: rgba(56, 189, 248, 0.18);
       color: #38bdf8;
+    }
+    .forest-badge {
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(30, 215, 96, 0.14);
+      color: #1ed760;
+      font-size: 11px;
+      letter-spacing: 0.3px;
     }
     .lap-dots { display: flex; gap: 5px; }
     .lap-dot {
@@ -348,18 +356,27 @@
 </head>
 <body>
 
-  <!-- Top Bar: Pilih Model 3D, Toggle Animasi & Warna BG -->
+  <!-- Top Bar: Pilih Model 3D, Toggle Motion & Grow, Warna BG -->
   <div class="top-bar">
     <select id="modelSelect" class="scene-select" onchange="changeModel(this.value)" title="Pilih Model 3D">
-      <option value="https://modelviewer.dev/shared-assets/models/RobotExpressive.glb">3D: Lo-Fi Robot (Animated)</option>
+      <option value="https://modelviewer.dev/shared-assets/models/RobotExpressive.glb">3D: Lo-Fi Robot</option>
       <option value="https://modelviewer.dev/shared-assets/models/Astronaut.glb">3D: Astronaut</option>
     </select>
 
-    <!-- Toggle Animasi Saat Timer Berjalan -->
-    <label class="motion-toggle-wrap" title="Aktifkan animasi 3D saat timer berjalan">
+    <!-- Toggle Animasi Rotasi/Keyframe -->
+    <label class="toggle-wrap" title="Putar animasi & rotasi saat timer aktif">
       <span>Motion</span>
       <span class="switch">
-        <input type="checkbox" id="motionToggle" checked onchange="syncModelAnimation()" />
+        <input type="checkbox" id="motionToggle" checked onchange="syncModelState()" />
+        <span class="slider"></span>
+      </span>
+    </label>
+
+    <!-- Toggle Pertumbuhan Ukuran (Scale Growth) -->
+    <label class="toggle-wrap" title="Objek membesar dari kecil (25%) hingga penuh (100%) selama sesi Focus">
+      <span>Grow</span>
+      <span class="switch">
+        <input type="checkbox" id="growToggle" checked onchange="syncModelState()" />
         <span class="slider"></span>
       </span>
     </label>
@@ -408,11 +425,12 @@
       <button class="mode-btn active" style="height: 30px;" onclick="applyCustomSettings()">Set</button>
     </div>
 
-    <!-- Indikator Phase & Lap -->
+    <!-- Indikator Phase, Lap & Trees Grown -->
     <div class="session-status">
       <span class="phase-pill" id="phaseBadge">FOCUS</span>
       <span id="lapText">LAP 1 / 4</span>
       <div class="lap-dots" id="lapDots"></div>
+      <span class="forest-badge" id="forestCount" title="Jumlah pohon/sesi selesai">🌲 0</span>
     </div>
 
     <div class="timer-display" id="timer" onclick="toggleCustomPanel(document.getElementById('customModeBtn'))" title="Klik untuk atur Focus, Break & Lap">25:00</div>
@@ -432,7 +450,6 @@
 
       <div class="player-controls-row">
         <div class="transport-btns">
-          <!-- Shuffle Icon -->
           <button class="icon-btn active" onclick="playRandomTrack()" title="Shuffle Track">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line>
@@ -441,7 +458,6 @@
             </svg>
           </button>
 
-          <!-- Spotify Play/Pause Circle Button -->
           <button class="spotify-play-btn" id="audioBtn" onclick="toggleAudio()" title="Play / Pause">
             <svg id="playIcon" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
               <polygon points="6 3 20 12 6 21 6 3"></polygon>
@@ -452,7 +468,6 @@
             </svg>
           </button>
 
-          <!-- Next Track Icon -->
           <button class="icon-btn" onclick="playNextTrack()" title="Next Track">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
               <polygon points="5 4 15 12 5 20 5 4"></polygon>
@@ -461,7 +476,6 @@
           </button>
         </div>
 
-        <!-- Volume Control -->
         <div class="volume-box">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#a1a1aa" stroke-width="2">
             <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
@@ -476,24 +490,31 @@
   <audio id="bgAudio"></audio>
 
   <script>
-    // --- STATE SESI & LAP ---
+    // --- STATE SESI, LAP & FOREST GROWTH ---
     let focusMinutes = 25;
     let breakMinutes = 5;
     let totalLaps = 4;
     let currentLap = 1;
+    let treesGrown = 0;
     let currentPhase = "focus";
     let timeLeft = focusMinutes * 60;
     let timerId = null;
     let isRunning = false;
 
+    // Menyimpan daftar file bertahap dari repo (misal: tree-1.glb, tree-2.glb, dst.)
+    let forestStageModels = [];
+
     const viewerEl = document.getElementById("viewer");
+    const modelSelect = document.getElementById("modelSelect");
     const motionToggle = document.getElementById("motionToggle");
+    const growToggle = document.getElementById("growToggle");
     const timerEl = document.getElementById("timer");
     const startBtn = document.getElementById("startBtn");
     const customPanel = document.getElementById("customPanel");
     const phaseBadge = document.getElementById("phaseBadge");
     const lapText = document.getElementById("lapText");
     const lapDotsEl = document.getElementById("lapDots");
+    const forestCountEl = document.getElementById("forestCount");
 
     const focusInput = document.getElementById("focusInput");
     const breakInput = document.getElementById("breakInput");
@@ -505,32 +526,61 @@
     const trackNameEl = document.getElementById("trackName");
     const audioStatusEl = document.getElementById("audioStatus");
 
-    // --- 1. ANIMASI 3D SINKRON DENGAN TIMER ---
-    function syncModelAnimation() {
-      const shouldAnimate = isRunning && motionToggle.checked;
+    // --- 1. ANIMASI & PERTUMBUHAN SKALA (GROWTH) 3D ---
+    function updateModelGrowthScale() {
+      if (!growToggle.checked) {
+        viewerEl.setAttribute("scale", "1 1 1");
+        return;
+      }
 
+      if (currentPhase === "focus") {
+        const totalFocusSec = focusMinutes * 60;
+        const elapsed = Math.max(0, totalFocusSec - timeLeft);
+        const progress = Math.min(1, elapsed / totalFocusSec); // 0.0 -> 1.0
+
+        // Mulai dari 0.25 (bibit) dan tumbuh sampai 1.0 (pohon dewasa penuh)
+        const minScale = 0.25;
+        const currentScale = (minScale + (1 - minScale) * progress).toFixed(4);
+        viewerEl.setAttribute("scale", `${currentScale} ${currentScale} ${currentScale}`);
+      } else {
+        // Saat Break, pertahankan ukuran penuh hasil pertumbuhan
+        viewerEl.setAttribute("scale", "1 1 1");
+      }
+    }
+
+    function syncModelState() {
+      // 1. Sinkronkan pertumbuhan skala
+      updateModelGrowthScale();
+
+      // 2. Sinkronkan animasi & rotasi saat timer berjalan
+      const shouldAnimate = isRunning && motionToggle.checked;
       if (shouldAnimate) {
-        // 1. Jika model .glb punya embedded animation (dari Blender / preset), putar!
         if (viewerEl.availableAnimations && viewerEl.availableAnimations.length > 0) {
-          // Pilih animasi santai seperti Idle/Walking jika ada, atau animasi pertama
-          const preferred = viewerEl.availableAnimations.find(a => /idle|walk|dance|wave/i.test(a));
+          const preferred = viewerEl.availableAnimations.find(a => /idle|walk|dance|wave|grow/i.test(a));
           viewerEl.animationName = preferred || viewerEl.availableAnimations[0];
           viewerEl.play();
         }
-        // 2. Aktifkan rotasi orbital halus agar objek statis tetap terasa hidup
         viewerEl.setAttribute("auto-rotate", "");
         viewerEl.setAttribute("rotation-per-second", currentPhase === "focus" ? "12deg" : "5deg");
       } else {
-        // Hentikan animasi & rotasi saat timer pause / selesai / toggle mati
-        if (typeof viewerEl.pause === "function") {
-          viewerEl.pause();
-        }
+        if (typeof viewerEl.pause === "function") viewerEl.pause();
         viewerEl.removeAttribute("auto-rotate");
       }
     }
 
-    // Pastikan status animasi langsung menyesuaikan begitu model 3D baru selesai dimuat
-    viewerEl.addEventListener("load", syncModelAnimation);
+    // Jika user upload tree-1.glb, tree-2.glb, tree-3.glb di repo, ganti model otomatis tiap naik lap
+    function updateForestStageModel() {
+      if (forestStageModels.length > 0) {
+        const stageIdx = Math.min(treesGrown, forestStageModels.length - 1);
+        const targetFile = forestStageModels[stageIdx];
+        if (viewerEl.getAttribute("src") !== targetFile) {
+          viewerEl.src = targetFile;
+          modelSelect.value = targetFile;
+        }
+      }
+    }
+
+    viewerEl.addEventListener("load", syncModelState);
 
     function changeModel(modelUrl) {
       viewerEl.src = modelUrl;
@@ -570,6 +620,7 @@
       phaseBadge.textContent = currentPhase === "focus" ? "FOCUS" : "BREAK";
       phaseBadge.classList.toggle("break", currentPhase === "break");
       lapText.textContent = `LAP ${currentLap} / ${totalLaps}`;
+      forestCountEl.textContent = `🌲 ${treesGrown}`;
 
       lapDotsEl.innerHTML = "";
       for (let i = 1; i <= totalLaps; i++) {
@@ -585,17 +636,23 @@
       playChime();
 
       if (currentPhase === "focus") {
+        // 1 Sesi Focus berhasil -> Tambah 1 pohon tumbuh!
+        treesGrown++;
+        updateForestStageModel();
+
         if (currentLap >= totalLaps) {
           clearInterval(timerId);
           isRunning = false;
           startBtn.textContent = "Start Focus";
-          syncModelAnimation();
+          timeLeft = 0;
+          updateModelGrowthScale(); // Pastikan skala penuh 1.0 saat selesai
 
           currentLap = totalLaps + 1;
           renderSessionUI();
           lapText.textContent = `DONE (${totalLaps}/${totalLaps})`;
           currentLap = 1;
           timeLeft = focusMinutes * 60;
+          syncModelState();
           return;
         }
         currentPhase = "break";
@@ -607,13 +664,13 @@
       }
 
       renderSessionUI();
-      syncModelAnimation();
+      syncModelState();
 
       if (!autoContinue) {
         clearInterval(timerId);
         isRunning = false;
         startBtn.textContent = currentPhase === "focus" ? "Start Focus" : "Start Break";
-        syncModelAnimation();
+        syncModelState();
       }
     }
 
@@ -629,12 +686,13 @@
           if (timeLeft > 0) {
             timeLeft--;
             renderSessionUI();
+            updateModelGrowthScale(); // Pohon membesar setiap detik!
           } else {
             handlePhaseComplete(true);
           }
         }, 1000);
       }
-      syncModelAnimation();
+      syncModelState();
     }
 
     function skipPhase() {
@@ -646,10 +704,12 @@
       isRunning = false;
       currentPhase = "focus";
       currentLap = 1;
+      treesGrown = 0;
       timeLeft = focusMinutes * 60;
       startBtn.textContent = "Start Focus";
+      updateForestStageModel();
       renderSessionUI();
-      syncModelAnimation();
+      syncModelState();
     }
 
     function applyPreset(fMins, bMins, laps, btnEl) {
@@ -773,14 +833,21 @@
     async function initApp() {
       renderSessionUI();
 
-      const modelSelect = document.getElementById("modelSelect");
-
       try {
         const res = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/`);
         if (res.ok) {
           const files = await res.json();
 
-          const glbFiles = files.filter(f => f.name.toLowerCase().endsWith(".glb"));
+          // Filter semua file .glb
+          const glbFiles = files
+            .filter(f => f.name.toLowerCase().endsWith(".glb"))
+            .sort((a, b) => a.name.localeCompare(b.name)); // Urutkan alfabetis (misal tree-1, tree-2, tree-3)
+
+          // Deteksi jika ada seri bertahap (misal tree-1.glb, tree-2.glb, forest-1.glb)
+          forestStageModels = glbFiles
+            .filter(f => /(tree|forest|stage|lap)[-_]?\d+\.glb$/i.test(f.name))
+            .map(f => f.name);
+
           glbFiles.forEach((file, index) => {
             const opt = document.createElement("option");
             opt.value = file.name;
@@ -794,6 +861,7 @@
             }
           });
 
+          // Filter semua file .mp3
           const mp3Files = files.filter(f => f.name.toLowerCase().endsWith(".mp3"));
           mp3Files.forEach(file => {
             const cleanTitle = file.name.replace(/\.mp3$/i, "").replace(/[-_]/g, " ");
@@ -809,7 +877,7 @@
 
       const randomStart = Math.floor(Math.random() * playlist.length);
       loadTrack(randomStart, false);
-      syncModelAnimation();
+      syncModelState();
     }
 
     initApp();
