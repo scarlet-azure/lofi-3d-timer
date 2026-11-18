@@ -88,7 +88,7 @@
 </head>
 <body>
 
-  <!-- Ganti 'scene.glb' dengan file 3D kamu nanti -->
+  <!-- Ganti 'ruangan.glb' dengan file 3D kamu nanti -->
   <model-viewer 
     id="viewer"
     src="https://modelviewer.dev/shared-assets/models/Astronaut.glb" 
@@ -114,13 +114,14 @@
     </div>
 
     <div class="audio-bar">
-      <button class="btn btn-secondary" style="padding: 6px 12px;" id="audioBtn" onclick="toggleAudio()">Play Music</button>
+      <button class="btn btn-secondary" style="padding: 6px 12px;" id="audioBtn" onclick="toggleAudio()">Play</button>
+      <button class="btn btn-secondary" style="padding: 6px 12px;" onclick="playRandomTrack()" title="Acak Lagu">Shuffle</button>
       <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="0.5" oninput="changeVolume(this.value)" />
     </div>
+    <div id="trackName" style="font-size: 11px; color: #71717a;">Track: Ready</div>
   </div>
 
-  <!-- Ganti 'lofi-guitar.mp3' dengan rekaman musik kamu -->
-  <audio id="bgAudio" loop src="lofi-guitar.mp3"></audio>
+  <audio id="bgAudio"></audio>
 
   <script>
     let defaultMinutes = 25;
@@ -132,7 +133,9 @@
     const startBtn = document.getElementById("startBtn");
     const bgAudio = document.getElementById("bgAudio");
     const audioBtn = document.getElementById("audioBtn");
+    const trackNameEl = document.getElementById("trackName");
 
+    // --- TIMER LOGIC ---
     function updateDisplay() {
       const mins = Math.floor(timeLeft / 60).toString().padStart(2, "0");
       const secs = (timeLeft % 60).toString().padStart(2, "0");
@@ -177,19 +180,71 @@
       resetTimer();
     }
 
+    // --- AUDIO & PLAYLIST LOGIC ---
+    const playlist = [
+      {
+        title: "Gymnopédie No. 1 - Erik Satie (Public)",
+        url: "https://upload.wikimedia.org/wikipedia/commons/3/35/Erik_Satie_-_Gymnopedie_No_1.ogg"
+      },
+      {
+        title: "Clair de Lune - Debussy (Public)",
+        url: "https://upload.wikimedia.org/wikipedia/commons/b/be/Claude_Debussy_-_Clair_de_lune.ogg"
+      },
+      {
+        title: "My Original Guitar Loop (Upload lofi-guitar.mp3)",
+        url: "lofi-guitar.mp3"
+      }
+    ];
+
+    let currentTrackIndex = Math.floor(Math.random() * playlist.length);
+    bgAudio.volume = 0.5;
+
+    function loadTrack(index, autoPlay = false) {
+      currentTrackIndex = index;
+      const track = playlist[currentTrackIndex];
+      bgAudio.src = track.url;
+      trackNameEl.textContent = `Track: ${track.title}`;
+      
+      if (autoPlay) {
+        bgAudio.play().then(() => {
+          audioBtn.textContent = "Pause";
+        }).catch(() => {
+          trackNameEl.textContent = `File belum ada / diblokir: ${track.title}`;
+          audioBtn.textContent = "Play";
+        });
+      }
+    }
+
+    function playRandomTrack() {
+      if (playlist.length <= 1) return;
+      let nextIndex;
+      do {
+        nextIndex = Math.floor(Math.random() * playlist.length);
+      } while (nextIndex === currentTrackIndex);
+      
+      loadTrack(nextIndex, true);
+    }
+
+    bgAudio.addEventListener("ended", playRandomTrack);
+
     function toggleAudio() {
       if (bgAudio.paused) {
-        bgAudio.play().catch(() => alert("Tambahkan file 'lofi-guitar.mp3' di folder yang sama dulu."));
-        audioBtn.textContent = "Pause Music";
+        bgAudio.play().then(() => {
+          audioBtn.textContent = "Pause";
+        }).catch(() => {
+          playRandomTrack();
+        });
       } else {
         bgAudio.pause();
-        audioBtn.textContent = "Play Music";
+        audioBtn.textContent = "Play";
       }
     }
 
     function changeVolume(val) {
       bgAudio.volume = val;
     }
+
+    loadTrack(currentTrackIndex, false);
   </script>
 </body>
 </html>
