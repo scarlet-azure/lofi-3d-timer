@@ -60,16 +60,10 @@ function updateHudLayout() {
 
   if (shouldCompact) {
     topBarEl.classList.add("opacity-50", "hover:opacity-100");
-    mainStageBoxEl.classList.remove("pb-56");
-    mainStageBoxEl.classList.add("pb-16");
     collapseHudBtn.classList.add("hidden");
     collapseHudBtn.classList.remove("flex");
   } else {
     topBarEl.classList.remove("opacity-50", "hover:opacity-100");
-    mainStageBoxEl.classList.add("pb-56");
-    mainStageBoxEl.classList.remove("pb-16");
-
-    // Jika timer sedang jalan tapi user membuka HUD besar, tampilkan tombol untuk mengecilkan kembali
     if (isRunning) {
       collapseHudBtn.classList.remove("hidden");
       collapseHudBtn.classList.add("flex");
@@ -78,6 +72,7 @@ function updateHudLayout() {
       collapseHudBtn.classList.remove("flex");
     }
   }
+  updateModelGrowthScale();
 }
 
 // --- 2. GROWTH SCALE, MOTION & CLONES ---
@@ -88,10 +83,24 @@ function getFocusProgress() {
 }
 
 function updateModelGrowthScale() {
+  const shouldCompact = isRunning && !isHudExpanded;
+  // Geser sedikit ke atas (-8%) hanya saat HUD penuh terbuka, dan kembali ke tengah (0%) saat compact
+  const translateY = shouldCompact ? "0%" : "-8%";
+
   if (!growToggle.checked) {
-    mainScaleWrapperEl.style.transform = "scale(1)";
+    mainScaleWrapperEl.style.transform = `translateY(${translateY}) scale(1)`;
     return;
   }
+
+  if (currentPhase === "focus") {
+    const progress = getFocusProgress();
+    const minScale = 0.35;
+    const s = (minScale + (1 - minScale) * progress).toFixed(4);
+    mainScaleWrapperEl.style.transform = `translateY(${translateY}) scale(${s})`;
+  } else {
+    mainScaleWrapperEl.style.transform = `translateY(${translateY}) scale(1)`;
+  }
+}
 
   if (currentPhase === "focus") {
     const progress = getFocusProgress();
